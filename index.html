@@ -17,15 +17,24 @@
       </div>
     </header>
 
-    <!-- 隱私安全承諾聲明 -->
-    <div class="privacy-bar">
-      🔒 <strong>隱私聲明：</strong> GPS 定位純於本地運行，絕不安裝或傳送個人位置至外置伺服器。
+    <!-- 模式切換 Tabs (選餐廳 vs 選 ABCD 餐) -->
+    <div class="mode-tabs">
+      <button id="tabRestaurant" class="tab-btn active">🏪 搵餐廳 Mode</button>
+      <button id="tabSetMenu" class="tab-btn">🍱 揀 ABCD 餐 Mode</button>
     </div>
 
-    <!-- 定位與環境列 -->
-    <div id="statusNotice" class="notice-bar">
-      <span id="locationText">📍 點擊按鈕獲取周邊 12 間餐廳</span><br>
-      <button id="btnGeo" class="geo-btn" style="margin-top:6px;">📡 搜尋周邊 12 間餐廳 (GPS)</button>
+    <!-- 隱私安全聲明 -->
+    <div class="privacy-bar">
+      🔒 <strong>隱私聲明：</strong> 本地運算，絕不上傳或儲存個人位置。
+    </div>
+
+    <!-- 餐廳模式專用：地點搜尋列 -->
+    <div id="locationSearchBox" class="notice-bar">
+      <div class="input-group" style="margin-bottom:6px;">
+        <input type="text" id="locationInput" placeholder="輸入地點 (例: 觀塘 / 中環 / 灣仔)">
+        <button id="btnSearchLoc">搜尋地點</button>
+      </div>
+      <button id="btnGeo" class="geo-btn">📡 使用目前 GPS 位置 (12間)</button>
     </div>
 
     <!-- 輪盤區域 -->
@@ -37,9 +46,9 @@
 
     <!-- 投票與手動新增區域 -->
     <div class="vote-section">
-      <h3>🗳️ 餐廳選單與加權投票 (預設各 1 票)</h3>
+      <h3 id="sectionTitle">🗳️ 餐廳選單與加權投票 (預設各 1 票)</h3>
       <div class="input-group">
-        <input type="text" id="customInput" placeholder="自己加餐廳 (例: 壽司郎/壽喜燒)">
+        <input type="text" id="customInput" placeholder="自己加選項 (例: F餐/特餐)">
         <button id="btnAddItem">新增選項</button>
       </div>
       <ul id="itemList" class="item-list"></ul>
