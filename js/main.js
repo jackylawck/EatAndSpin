@@ -53,8 +53,10 @@ const defaultRestaurants = [
 async function init() {
   updateUI();
 
+  // 1. 優先繪製輪盤（確保畫面不會卡空白）
   const wheel = new Wheel('wheelCanvas', defaultRestaurants);
 
+  // 綁定語言按鈕
   document.getElementById('btnLangZh')?.addEventListener('click', () => {
     setLanguage('zh');
     updateUI();
@@ -64,22 +66,28 @@ async function init() {
     updateUI();
   });
 
-  const weather = await getHKOStatus();
+  // 2. 獲取天氣（加上非同步容錯）
   const noticeBar = document.getElementById('statusNotice');
-
   let activeList = defaultRestaurants;
 
-  if (weather.isRaining) {
-    if (noticeBar) noticeBar.innerText = t('rainWarning');
-    activeList = defaultRestaurants.filter(r => r.indoor);
-  } else if (weather.isVeryHot) {
-    if (noticeBar) noticeBar.innerText = t('hotWarning');
-  } else {
+  try {
+    const weather = await getHKOStatus();
+    if (weather.isRaining) {
+      if (noticeBar) noticeBar.innerText = t('rainWarning');
+      activeList = defaultRestaurants.filter(r => r.indoor);
+    } else if (weather.isVeryHot) {
+      if (noticeBar) noticeBar.innerText = t('hotWarning');
+    } else {
+      if (noticeBar) noticeBar.innerText = t('normalStatus');
+    }
+  } catch (e) {
     if (noticeBar) noticeBar.innerText = t('normalStatus');
   }
 
+  // 根據天氣過濾後更新輪盤
   wheel.setItems(activeList);
 
+  // 3. 綁定抽籤按鈕
   const spinBtn = document.getElementById('spinBtn');
   const resultBox = document.getElementById('resultBox');
 
@@ -100,7 +108,7 @@ async function init() {
 
       if (selected.kmbStopId && selected.kmbRoute) {
         const eta = await getKmbETA(selected.kmbStopId, selected.kmbRoute);
-        if (eta.success) {
+        if (eta && eta.success) {
           html += `<p>🚌 九巴 ${eta.route}：下一班 <strong>${eta.minutesLeft} 分鐘</strong>後到站</p>`;
         }
       }
