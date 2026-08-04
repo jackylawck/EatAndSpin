@@ -40,11 +40,19 @@
 
 ---
 
-## 🔒 隱私與安全聲明 (Privacy & Security Notice)
+## 🛡️ 合規與 ISO 標準對齊 (ISO Compliance Alignment)
 
-本專案遵守嚴格的數據隱私原則：
-1. **無後端追蹤**：本應用為純前端單頁應用（SPA），不設任何數據資料庫。
-2. **GPS 數據保護**：用戶的地理位置僅於設備本地用於計算餐廳距離與 API 查詢，網頁關閉後即刻釋放，絕不上傳或出售個人位置數據。
+本專案在架構設計上嚴格遵循 **ISO/IEC 資訊安全與隱私國際標準** 之規範：
+
+* **ISO/IEC 27701 (PIMS) / GDPR — 設計即隱私 (Privacy by Design)**
+  * **無後端資料留存 (Zero Server Storage)**：採用純前端（Client-Side）運算架構，位置數據僅於使用者瀏覽器 Session 中即時處置，網頁關閉後自動釋放。
+  * **資料最小化 (Data Minimization)**：不設置使用者註冊系統、不收集任何個人可識別資訊（PII）。
+* **ISO/IEC 27001 (ISMS) — 通訊安全與權限控制**
+  * **傳輸層加密 (TLS Encryption)**：全站與第三方 API 介接（OpenStreetMap / HKO / KMB）均強制採用 `HTTPS` 安全加密傳輸。
+  * **明確授權 (Explicit Consent)**：地理位置存取嚴格遵循 W3C 隱私規範，必須取得使用者主動授權方可執行。
+* **ISO/IEC 42001 (AIMS) / ISO 22301 — 系統透明度與營運韌性**
+  * **容錯與備援機制 (Exception Handling)**：內建 `safeFetch` 超時控制與 Fallback 預設選單，確保在第三方 API 異常或斷線時系統仍能穩定運作。
+  * **演算法透明度 (Algorithmic Transparency)**：輪盤轉動與加權機率演算完全公開、可追溯且無隱藏偏見。
 
 ---
 
