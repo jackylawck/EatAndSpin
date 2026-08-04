@@ -4,36 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>食一轉 · Eat & Spin</title>
+
+  <!-- ⚠️ 務必確保加上這行來載入 CSS 樣式 -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <header class="header">
-    <h1 data-i18n="appTitle">食一轉 · Eat & Spin</h1>
-    <!-- 語言切換按鈕 -->
-    <div class="lang-switch">
-      <button id="btnLangZh">繁中</button>
-      <button id="btnLangEn">EN</button>
-    </div>
-  </header>
+  <div class="container">
+    <header class="header">
+      <h1 data-i18n="appTitle">食一轉 · Eat & Spin</h1>
+      <div class="lang-switch">
+        <button id="btnLangZh">繁中</button>
+        <button id="btnLangEn">EN</button>
+      </div>
+    </header>
 
-  <main class="container">
-    <!-- 天威/環境狀態提示列 -->
     <div id="statusNotice" class="notice-bar">
       <span data-i18n="loadingStatus">正在感應環境數據...</span>
     </div>
 
-    <!-- 輪盤區域 -->
     <div class="wheel-container">
-      <canvas id="wheelCanvas" width="350" height="350"></canvas>
-      <button id="spinBtn" class="spin-btn" data-i18n="spinBtn">食一轉！</button>
+      <canvas id="wheelCanvas" width="300" height="300"></canvas>
     </div>
 
-    <!-- 結果顯示區 -->
-    <div id="resultBox" class="result-box"></div>
-  </main>
+    <button id="spinBtn" class="spin-btn" data-i18n="spinBtn">食一轉！</button>
 
-  <!-- 原生 ES Module 載入 -->
+    <div id="resultBox" class="result-box"></div>
+  </div>
+
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
