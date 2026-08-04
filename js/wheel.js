@@ -16,24 +16,27 @@ export class Wheel {
   }
 
   draw() {
-    const numItems = this.items.length;
-    if (numItems === 0) return;
+    if (this.items.length === 0) return;
 
     const width = this.canvas.width;
     const height = this.canvas.height;
     const centerX = width / 2;
     const centerY = height / 2;
     const radius = width / 2 - 10;
-    const sliceAngle = (2 * Math.PI) / numItems;
+
+    const totalVotes = this.items.reduce((sum, item) => sum + (item.votes || 1), 0);
 
     this.ctx.clearRect(0, 0, width, height);
 
+    let startAngle = this.currentAngle;
+
     this.items.forEach((item, index) => {
-      const angle = this.currentAngle + index * sliceAngle;
+      const votes = item.votes || 1;
+      const sliceAngle = (votes / totalVotes) * (2 * Math.PI);
 
       this.ctx.beginPath();
       this.ctx.moveTo(centerX, centerY);
-      this.ctx.arc(centerX, centerY, radius, angle, angle + sliceAngle);
+      this.ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
       this.ctx.fillStyle = COLORS[index % COLORS.length];
       this.ctx.fill();
       this.ctx.lineWidth = 2;
@@ -42,12 +45,14 @@ export class Wheel {
 
       this.ctx.save();
       this.ctx.translate(centerX, centerY);
-      this.ctx.rotate(angle + sliceAngle / 2);
+      this.ctx.rotate(startAngle + sliceAngle / 2);
       this.ctx.textAlign = 'right';
       this.ctx.fillStyle = '#ffffff';
-      this.ctx.font = 'bold 14px -apple-system, sans-serif';
-      this.ctx.fillText(item.name, radius - 15, 5);
+      this.ctx.font = 'bold 13px -apple-system, sans-serif';
+      this.ctx.fillText(`${item.name} (${votes}票)`, radius - 15, 5);
       this.ctx.restore();
+
+      startAngle += sliceAngle;
     });
 
     this.ctx.beginPath();
@@ -80,12 +85,23 @@ export class Wheel {
         requestAnimationFrame(animate);
       } else {
         this.isSpinning = false;
-        const numItems = this.items.length;
-        const sliceAngle = (2 * Math.PI) / numItems;
-        const normalizedAngle = (1.5 * Math.PI - (this.currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-        const winningIndex = Math.floor(normalizedAngle / sliceAngle) % numItems;
 
-        if (onComplete) onComplete(this.items[winningIndex]);
+        const totalVotes = this.items.reduce((sum, item) => sum + (item.votes || 1), 0);
+        const normalizedAngle = (1.5 * Math.PI - (this.currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+        let currentAccumAngle = 0;
+        let selectedItem = this.items[0];
+
+        for (let item of this.items) {
+          const sliceAngle = ((item.votes || 1) / totalVotes) * (2 * Math.PI);
+          if (normalizedAngle >= currentAccumAngle && normalizedAngle < currentAccumAngle + sliceAngle) {
+            selectedItem = item;
+            break;
+          }
+          currentAccumAngle += sliceAngle;
+        }
+
+        if (onComplete) onComplete(selectedItem);
       }
     };
 
