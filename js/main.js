@@ -1,24 +1,34 @@
 // js/main.js
 import { setLanguage, updateUI, t } from './i18n.js';
 import { getHKOStatus } from './api/hko.js';
+import { Wheel } from './wheel.js';
 
-// 初始餐廳數據模型
 const defaultRestaurants = [
-  { name: '室內商場車仔麵', indoor: true },
-  { name: '露天大排檔煲仔飯', indoor: false },
-  { name: '連鎖冷氣快餐', indoor: true },
-  { name: '冰室茶餐廳', indoor: true }
+  { name: '室內車仔麵', indoor: true },
+  { name: '露天煲仔飯', indoor: false },
+  { name: '連鎖快餐', indoor: true },
+  { name: '冰室茶餐廳', indoor: true },
+  { name: '日式定食', indoor: true },
+  { name: '生滾海鮮粥', indoor: false }
 ];
 
 async function init() {
-  // 1. 初始化多語言
   updateUI();
-  
-  // 綁定語言切換按鈕
-  document.getElementById('btnLangZh')?.addEventListener('click', () => setLanguage('zh'));
-  document.getElementById('btnLangEn')?.addEventListener('click', () => setLanguage('en'));
 
-  // 2. 異步獲取天氣狀況
+  // 1. 初始化彩色輪盤
+  const wheel = new Wheel('wheelCanvas', defaultRestaurants);
+
+  // 語言按鈕綁定
+  document.getElementById('btnLangZh')?.addEventListener('click', () => {
+    setLanguage('zh');
+    updateUI();
+  });
+  document.getElementById('btnLangEn')?.addEventListener('click', () => {
+    setLanguage('en');
+    updateUI();
+  });
+
+  // 2. 獲取天氣數據並更新輪盤選項
   const weather = await getHKOStatus();
   const noticeBar = document.getElementById('statusNotice');
 
@@ -33,15 +43,24 @@ async function init() {
     if (noticeBar) noticeBar.innerText = t('normalStatus');
   }
 
-  // 3. 綁定抽籤按鈕
-  document.getElementById('spinBtn')?.addEventListener('click', () => {
-    const picked = activeList[Math.floor(Math.random() * activeList.length)];
-    const resultBox = document.getElementById('resultBox');
-    if (resultBox) {
-      resultBox.innerText = `${t('resultPrefix')} ${picked.name}`;
-    }
+  // 更新輪盤選項為過濾後的列表
+  wheel.setItems(activeList);
+
+  // 3. 點擊「食一轉！」觸發旋轉動畫
+  const spinBtn = document.getElementById('spinBtn');
+  const resultBox = document.getElementById('resultBox');
+
+  spinBtn?.addEventListener('click', () => {
+    spinBtn.disabled = true;
+    if (resultBox) resultBox.innerText = "...";
+
+    wheel.spin((selected) => {
+      spinBtn.disabled = false;
+      if (resultBox) {
+        resultBox.innerText = `${t('resultPrefix')} ${selected.name}`;
+      }
+    });
   });
 }
 
-// 啟動 App
 init();
