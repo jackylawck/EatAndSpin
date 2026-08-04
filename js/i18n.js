@@ -1,4 +1,3 @@
-// js/i18n.js
 import { APP_CONFIG } from './config.js';
 
 const translations = {
