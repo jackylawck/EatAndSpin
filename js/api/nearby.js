@@ -1,9 +1,7 @@
 // js/api/nearby.js
 import { safeFetch } from './fetcher.js';
 
-/**
- * 免費免 Key：根據 GPS 坐標自動獲取周圍 500 米內的 12 間真實餐廳 (OpenStreetMap)
- */
+// 根據經緯度搜尋 12 間真實餐廳
 export async function fetchNearbyPlaces(lat, lng) {
   const query = `
     [out:json][timeout:5];
@@ -22,11 +20,25 @@ export async function fetchNearbyPlaces(lat, lng) {
     return data.elements
       .map(place => ({
         name: place.tags?.name || place.tags?.['name:zh'] || place.tags?.['name:en'],
-        votes: 1, // 預設 1 票
+        votes: 1,
         indoor: true
       }))
-      .filter(p => p.name) // 移除沒有名字的資料
-      .slice(0, 12); // 取前 12 間
+      .filter(p => p.name)
+      .slice(0, 12);
+  }
+
+  return [];
+}
+
+// 根據用戶輸入的地名（例：「觀塘」、「中環」）搜尋坐標並拉出 12 間餐廳
+export async function fetchPlacesByAddress(addressText) {
+  const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText + ', Hong Kong')}`;
+  const geoData = await safeFetch(geoUrl, {}, 5000);
+
+  if (geoData && geoData.length > 0) {
+    const lat = parseFloat(geoData[0].lat);
+    const lng = parseFloat(geoData[0].lon);
+    return await fetchNearbyPlaces(lat, lng);
   }
 
   return [];
