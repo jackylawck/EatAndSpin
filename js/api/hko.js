@@ -1,4 +1,3 @@
-// js/api/hko.js
 import { safeFetch } from './fetcher.js';
 import { APP_CONFIG } from '../config.js';
 
@@ -12,7 +11,6 @@ export async function getHKOStatus() {
     safeFetch(APP_CONFIG.API.HKO.WARNING_URL, {}, APP_CONFIG.API.HKO.TIMEOUT)
   ]);
 
-  // Data Transformer: 清洗數據，轉化為統一內部模型
   const isRaining = weatherData?.rainfall?.data?.some(r => r.max > 0) || false;
   const isVeryHot = !!warningData?.WHOT;
   const temp = weatherData?.temperature?.data[0]?.value || 25;
