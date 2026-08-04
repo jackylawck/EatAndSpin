@@ -17,7 +17,7 @@
       </div>
     </header>
 
-    <!-- 模式切換 Tabs (選餐廳 vs 選 ABCD 餐) -->
+    <!-- 模式切換 Tabs -->
     <div class="mode-tabs">
       <button id="tabRestaurant" class="tab-btn active">🏪 搵餐廳 Mode</button>
       <button id="tabSetMenu" class="tab-btn">🍱 揀 ABCD 餐 Mode</button>
@@ -32,7 +32,7 @@
     <div id="locationSearchBox" class="notice-bar">
       <div class="input-group" style="margin-bottom:6px;">
         <input type="text" id="locationInput" placeholder="輸入地點 (例: 觀塘 / 中環 / 灣仔)">
-        <button id="btnSearchLoc">搜尋地點</button>
+        <button id="btnSearchLoc" class="action-btn">搜尋地點</button>
       </div>
       <button id="btnGeo" class="geo-btn">📡 使用目前 GPS 位置 (12間)</button>
     </div>
@@ -49,7 +49,7 @@
       <h3 id="sectionTitle">🗳️ 餐廳選單與加權投票 (預設各 1 票)</h3>
       <div class="input-group">
         <input type="text" id="customInput" placeholder="自己加選項 (例: F餐/特餐)">
-        <button id="btnAddItem">新增選項</button>
+        <button id="btnAddItem" class="action-btn">新增選項</button>
       </div>
       <ul id="itemList" class="item-list"></ul>
     </div>
