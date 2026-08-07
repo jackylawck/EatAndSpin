@@ -16,6 +16,8 @@ export function filterPlaces(elements) {
 
   return elements.filter(item => {
     const tags = item.tags || {};
+    if (!tags.name) return false; // 排除沒有登記店名的地點
+
     const amenity = (tags.amenity || '').toLowerCase();
     const cuisine = (tags.cuisine || '').toLowerCase();
     const name = (tags.name || '').toLowerCase();
@@ -30,7 +32,7 @@ export function filterPlaces(elements) {
     // 菜式篩選
     if (selectedCuisines.length > 0) {
       const matches = selectedCuisines.some(type => {
-        if (type === 'chinese') return cuisine.includes('chinese') || cuisine.includes('cantonese') || cuisine.includes('dim_sum') || name.includes('中') || name.includes('點心') || name.includes('粵') || name.includes('酒樓');
+        if (type === 'chinese') return cuisine.includes('chinese') || cuisine.includes('cantonese') || cuisine.includes('dim_sum') || name.includes('中') || name.includes('點心') || name.includes('粵') || name.includes('酒樓') || name.includes('飯');
         if (type === 'japanese') return cuisine.includes('japanese') || cuisine.includes('korean') || cuisine.includes('sushi') || name.includes('日') || name.includes('韓') || name.includes('壽司') || name.includes('居酒屋');
         if (type === 'asian') return cuisine.includes('noodle') || cuisine.includes('thai') || cuisine.includes('vietnamese') || name.includes('麵') || name.includes('泰') || name.includes('越') || name.includes('米線');
         if (type === 'western') return cuisine.includes('western') || cuisine.includes('burger') || cuisine.includes('pizza') || cuisine.includes('italian') || name.includes('西') || name.includes('披薩') || name.includes('意');
@@ -45,30 +47,42 @@ export function filterPlaces(elements) {
 
 // 3. 按 GPS 坐標搜尋周邊餐廳 (Overpass API)
 export async function fetchNearbyPlaces(lat, lng) {
+  // 修正 Overpass QL 語法：使用 out center body; 避免語法解析失敗
   const query = `
     [out:json][timeout:25];
     (
-      node["amenity"="restaurant"](around:800, ${lat}, ${lng});
-      node["amenity"="fast_food"](around:800, ${lat}, ${lng});
-      node["amenity"="cafe"](around:800, ${lat}, ${lng});
-      node["amenity"="food_court"](around:800, ${lat}, ${lng});
+      node["amenity"~"restaurant|fast_food|cafe|food_court"](around:1000, ${lat}, ${lng});
+      way["amenity"~"restaurant|fast_food|cafe|food_court"](around:1000, ${lat}, ${lng});
     );
-    out body 40;
+    out center body;
   `;
 
-  const url = 'https://overpass-api.de/api/interpreter';
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept-Language': 'en-US,en;q=0.9,zh-TW,zh;q=0.8'
-    },
-    body: `data=${encodeURIComponent(query)}`
-  });
+  // 備用 API 節點列表 (若主伺服器忙碌自動切換備用節點)
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter'
+  ];
 
-  if (!response.ok) throw new Error('Overpass API Error');
-  const data = await response.json();
-  return data.elements || [];
+  for (const url of endpoints) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+        body: `data=${encodeURIComponent(query)}`
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.elements || [];
+      }
+    } catch (e) {
+      console.warn(`Endpoint ${url} failed, trying next mirror...`, e);
+    }
+  }
+
+  throw new Error('Overpass API Error');
 }
 
 // 4. 按地區/地址搜尋餐廳 (Nominatim API)
