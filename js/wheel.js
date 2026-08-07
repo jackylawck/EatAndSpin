@@ -103,7 +103,7 @@ export function spinWheel(items = [], lang = 'zh') {
   requestAnimationFrame(animate);
 }
 
-// 計算中獎結果 (支援雙語顯示)
+// 計算中獎結果 (加入 OpenRice 快速搜尋連結)
 function calculateResult(items, totalVotes, lang = 'zh') {
   let normalizedAngle = (1.5 * Math.PI - (currentAngle % (2 * Math.PI))) % (2 * Math.PI);
   if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
@@ -114,8 +114,20 @@ function calculateResult(items, totalVotes, lang = 'zh') {
     if (normalizedAngle >= accumulatedAngle && normalizedAngle < accumulatedAngle + sliceAngle) {
       const resultBox = document.getElementById('resultBox');
       if (resultBox) {
+        // 動態產生 OpenRice 搜尋網址
+        const openRiceUrl = `https://www.openrice.com/zh/hongkong/restaurants?where=${encodeURIComponent(item.name)}`;
+        
         const prefix = lang === 'en' ? "🎉 Today's Choice: " : "🎉 今日食：";
-        resultBox.innerHTML = `${prefix}<strong>${item.name}</strong>！`;
+        const btnText = lang === 'en' ? "🔍 View on OpenRice" : "🔍 喺 OpenRice 睇食評 / 菜單";
+
+        resultBox.innerHTML = `
+          <div style="font-size: 1.1rem; margin-bottom: 8px;">
+            ${prefix}<strong>${item.name}</strong>！
+          </div>
+          <a href="${openRiceUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 6px 14px; background-color: #ffb900; color: #1e1e1e; font-size: 0.85rem; font-weight: bold; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+            ${btnText}
+          </a>
+        `;
         resultBox.style.display = 'block';
       }
       break;
