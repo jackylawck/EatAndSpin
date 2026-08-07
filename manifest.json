@@ -1,12 +1,21 @@
-"icons": [
-  {
-    "src": "./EatandSpinicon-192.png",
-    "sizes": "192x192",
-    "type": "image/png"
-  },
-  {
-    "src": "./EatandSpinicon-512.png",
-    "sizes": "512x512",
-    "type": "image/png"
-  }
-]
+{
+  "name": "食一轉 · Eat & Spin",
+  "short_name": "食一轉",
+  "description": "香港專屬、結合動態加權投票與地點檢索的餐飲決策 App",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#ff4757",
+  "icons": [
+    {
+      "src": "./EatandSpinicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./EatandSpinicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
