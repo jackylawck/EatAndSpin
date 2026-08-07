@@ -7,9 +7,21 @@
   <!-- Google Search Console 驗證標籤 -->
   <meta name="google-site-verification" content="JZ5UohX-CcP_fQV0_DI9VadkKY4ZoTTkUifL88-fIcY" />
 
-  <!-- PWA 與主題設定 -->
   <title>食一轉 · Eat & Spin</title>
+
+  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
+
+  <!-- iOS / Safari 專用 Icon (解決分享選單與加至主畫面顯示問題) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="./EatandSpinicon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="./EatandSpinicon-512.png">
+
+  <!-- Open Graph 標籤 (解決 iOS/WhatsApp/FB 分享時的連結縮圖) -->
+  <meta property="og:title" content="食一轉 · Eat & Spin">
+  <meta property="og:description" content="香港專屬、結合動態加權投票與地點檢索的餐飲決策 Web App">
+  <meta property="og:image" content="./EatandSpinicon-512.png">
+
+  <!-- iOS Web App 主題設定 -->
   <meta name="theme-color" content="#ff4757">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
