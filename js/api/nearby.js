@@ -1,5 +1,3 @@
-import { OVERPASS_API_URL, NOMINATIM_API_URL } from './config.js';
-
 // 1. 解析餐廳名稱 (支援英文 / 繁體中文)
 export function parseRestaurantName(tags, currentLang = 'zh') {
   if (!tags) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
@@ -58,7 +56,7 @@ export async function fetchNearbyPlaces(lat, lng) {
     out body 40;
   `;
 
-  const url = OVERPASS_API_URL || 'https://overpass-api.de/api/interpreter';
+  const url = 'https://overpass-api.de/api/interpreter';
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -75,7 +73,7 @@ export async function fetchNearbyPlaces(lat, lng) {
 
 // 4. 按地區/地址搜尋餐廳 (Nominatim API)
 export async function fetchPlacesByAddress(address) {
-  const baseUrl = NOMINATIM_API_URL || 'https://nominatim.openstreetmap.org';
+  const baseUrl = 'https://nominatim.openstreetmap.org';
   const nominatimUrl = `${baseUrl}/search?format=json&q=${encodeURIComponent(address + ' Hong Kong')}`;
   
   const geoRes = await fetch(nominatimUrl);
