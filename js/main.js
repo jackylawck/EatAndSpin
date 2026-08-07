@@ -5,11 +5,17 @@ let currentLang = 'zh';
 let fetchedPool = [];
 let currentItems = [];
 
-// DOM 載入後執行
-window.addEventListener('DOMContentLoaded', () => {
+// 確保頁面加載後執行
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+
+function initApp() {
   initEvents();
   setDefaultSetMenu();
-});
+}
 
 function initEvents() {
   document.getElementById('btnLangZh')?.addEventListener('click', () => switchLanguage('zh'));
@@ -130,7 +136,6 @@ function renderItemList() {
     btnReplenish.style.display = (currentItems.length < 12 && fetchedPool.length > currentItems.length) ? 'block' : 'none';
   }
 
-  // 安全畫輪盤
   drawWheel(currentItems);
 }
 
