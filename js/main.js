@@ -1,11 +1,58 @@
 import { fetchNearbyPlaces, fetchPlacesByAddress, filterPlaces, parseRestaurantName } from './api/nearby.js';
 import { drawWheel, spinWheel } from './wheel.js';
 
-let currentLang = 'zh';
+let currentLang = 'zh'; // 'zh' 或 'en'
+let currentMode = 'restaurant'; // 'restaurant' 或 'setmenu'
+let rawSearchResults = []; // 儲存搜尋到的原始資料，供切換語言時重新翻譯名稱
 let fetchedPool = [];
 let currentItems = [];
 
-// 確保頁面加載後執行
+// 全頁面 UI 雙語字典
+const translations = {
+  zh: {
+    appTitle: '食一轉 · Eat & Spin',
+    tabRestaurant: '🏪 搵餐廳 Mode',
+    tabSetMenu: '🍱 揀 ABCD 餐 Mode',
+    privacyBar: '🔒 <strong>隱私聲明：</strong> 本地運算，絕不上傳或儲存個人位置。',
+    locationPlaceholder: '輸入地點 (例: 觀塘 / 中環 / 灣仔)',
+    btnSearchLoc: '搜尋地點',
+    filterTitle: '🎯 預先篩選類別：',
+    btnGeo: '📡 使用目前 GPS 位置 (12間)',
+    spinBtn: '食一轉！',
+    sectionTitle: '🗳️ 餐廳選單與加權投票 (預設各 1 票)',
+    btnReplenish: '🔄 補抓附近其他餐廳 (補滿 12 間)',
+    customPlaceholder: '自己加選項 (例: F餐/特餐)',
+    btnAddItem: '新增選項',
+    defaultMenu: [
+      { name: 'A餐：干炒牛河', votes: 1 },
+      { name: 'B餐：焗豬扒飯', votes: 1 },
+      { name: 'C餐：餐肉煎蛋飯', votes: 1 },
+      { name: 'D餐：雲吞麵', votes: 1 }
+    ]
+  },
+  en: {
+    appTitle: 'Eat & Spin',
+    tabRestaurant: '🏪 Find Restaurants',
+    tabSetMenu: '🍱 Set Menu Mode',
+    privacyBar: '🔒 <strong>Privacy Notice:</strong> Calculated locally. Location is never saved.',
+    locationPlaceholder: 'Enter location (e.g., Central / Wan Chai)',
+    btnSearchLoc: 'Search',
+    filterTitle: '🎯 Filter Categories:',
+    btnGeo: '📡 Use Current GPS (12)',
+    spinBtn: 'Spin Now!',
+    sectionTitle: '🗳️ Menu & Weighted Voting (Default 1 vote)',
+    btnReplenish: '🔄 Load More Nearby Restaurants (Fill to 12)',
+    customPlaceholder: 'Add custom item (e.g., Set F)',
+    btnAddItem: 'Add Item',
+    defaultMenu: [
+      { name: 'Set A: Stir-fried Beef Noodles', votes: 1 },
+      { name: 'Set B: Baked Pork Chop Rice', votes: 1 },
+      { name: 'Set C: Luncheon Meat & Egg Rice', votes: 1 },
+      { name: 'Set D: Wonton Noodles', votes: 1 }
+    ]
+  }
+};
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
@@ -14,23 +61,31 @@ if (document.readyState === 'loading') {
 
 function initApp() {
   initEvents();
-  setDefaultSetMenu();
+  switchMode('restaurant');
+  updateUIText();
 }
 
 function initEvents() {
+  // 語言切換
   document.getElementById('btnLangZh')?.addEventListener('click', () => switchLanguage('zh'));
   document.getElementById('btnLangEn')?.addEventListener('click', () => switchLanguage('en'));
 
-  document.getElementById('btnGeo')?.addEventListener('click', handleGeoSearch);
+  // 模式切換 Tabs
+  document.getElementById('tabRestaurant')?.addEventListener('click', () => switchMode('restaurant'));
+  document.getElementById('tabSetMenu')?.addEventListener('click', () => switchMode('setmenu'));
 
+  // 定位與搜尋
+  document.getElementById('btnGeo')?.addEventListener('click', handleGeoSearch);
   document.getElementById('btnSearchLoc')?.addEventListener('click', handleAddressSearch);
   document.getElementById('locationInput')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleAddressSearch();
   });
 
+  // 選項操作
   document.getElementById('btnAddItem')?.addEventListener('click', handleAddCustomItem);
   document.getElementById('btnReplenish')?.addEventListener('click', handleReplenish);
 
+  // 轉輪盤
   document.getElementById('spinBtn')?.addEventListener('click', () => {
     if (currentItems.length === 0) {
       alert(currentLang === 'en' ? 'Please add at least one item!' : '請先新增至少一個選項！');
@@ -40,6 +95,107 @@ function initEvents() {
   });
 }
 
+// 模式切換邏輯 (搵餐廳 Mode vs 揀 ABCD 餐 Mode)
+function switchMode(mode) {
+  currentMode = mode;
+  const tabRest = document.getElementById('tabRestaurant');
+  const tabMenu = document.getElementById('tabSetMenu');
+  const locBox = document.getElementById('locationSearchBox');
+
+  if (mode === 'restaurant') {
+    tabRest?.classList.add('active');
+    tabMenu?.classList.remove('active');
+    if (locBox) locBox.style.display = 'block';
+    
+    if (rawSearchResults.length > 0) {
+      processSearchResults(rawSearchResults);
+    } else {
+      currentItems = [];
+      renderItemList();
+    }
+  } else {
+    tabMenu?.classList.add('active');
+    tabRest?.classList.remove('active');
+    if (locBox) locBox.style.display = 'none';
+
+    // 載入當前語言的預設 ABCD 餐
+    currentItems = JSON.parse(JSON.stringify(translations[currentLang].defaultMenu));
+    renderItemList();
+  }
+}
+
+// 語言切換核心函式
+function switchLanguage(lang) {
+  if (currentLang === lang) return;
+  currentLang = lang;
+
+  // 更新語言按鈕高亮
+  const btnZh = document.getElementById('btnLangZh');
+  const btnEn = document.getElementById('btnLangEn');
+  if (lang === 'zh') {
+    btnZh?.classList.add('active');
+    btnEn?.classList.remove('active');
+  } else {
+    btnEn?.classList.add('active');
+    btnZh?.classList.remove('active');
+  }
+
+  // 1. 即時刷新介面文字
+  updateUIText();
+
+  // 2. 根據目前模式刷新選項資料
+  if (currentMode === 'setmenu') {
+    currentItems = JSON.parse(JSON.stringify(translations[currentLang].defaultMenu));
+    renderItemList();
+  } else if (rawSearchResults.length > 0) {
+    processSearchResults(rawSearchResults);
+  } else {
+    renderItemList();
+  }
+}
+
+// 更新全頁面文字介面
+function updateUIText() {
+  const t = translations[currentLang];
+
+  const appTitle = document.querySelector('[data-i18n="appTitle"]');
+  if (appTitle) appTitle.innerText = t.appTitle;
+
+  const tabRest = document.getElementById('tabRestaurant');
+  if (tabRest) tabRest.innerText = t.tabRestaurant;
+
+  const tabMenu = document.getElementById('tabSetMenu');
+  if (tabMenu) tabMenu.innerText = t.tabSetMenu;
+
+  const privacyBar = document.querySelector('.privacy-bar');
+  if (privacyBar) privacyBar.innerHTML = t.privacyBar;
+
+  const locInput = document.getElementById('locationInput');
+  if (locInput) locInput.placeholder = t.locationPlaceholder;
+
+  const btnSearchLoc = document.getElementById('btnSearchLoc');
+  if (btnSearchLoc) btnSearchLoc.innerText = t.btnSearchLoc;
+
+  const btnGeo = document.getElementById('btnGeo');
+  if (btnGeo) btnGeo.innerText = t.btnGeo;
+
+  const spinBtn = document.getElementById('spinBtn');
+  if (spinBtn) spinBtn.innerText = t.spinBtn;
+
+  const sectionTitle = document.getElementById('sectionTitle');
+  if (sectionTitle) sectionTitle.innerText = t.sectionTitle;
+
+  const btnReplenish = document.getElementById('btnReplenish');
+  if (btnReplenish) btnReplenish.innerText = t.btnReplenish;
+
+  const customInput = document.getElementById('customInput');
+  if (customInput) customInput.placeholder = t.customPlaceholder;
+
+  const btnAddItem = document.getElementById('btnAddItem');
+  if (btnAddItem) btnAddItem.innerText = t.btnAddItem;
+}
+
+// GPS 位置搜尋
 async function handleGeoSearch() {
   const btn = document.getElementById('btnGeo');
   if (!btn) return;
@@ -57,8 +213,8 @@ async function handleGeoSearch() {
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
       try {
-        const rawPlaces = await fetchNearbyPlaces(pos.coords.latitude, pos.coords.longitude);
-        processSearchResults(rawPlaces);
+        rawSearchResults = await fetchNearbyPlaces(pos.coords.latitude, pos.coords.longitude);
+        processSearchResults(rawSearchResults);
       } catch (err) {
         alert(currentLang === 'en' ? 'Failed to fetch places.' : '無法取得周邊餐廳資料。');
       } finally {
@@ -74,6 +230,7 @@ async function handleGeoSearch() {
   );
 }
 
+// 地點文字搜尋
 async function handleAddressSearch() {
   const input = document.getElementById('locationInput');
   const query = input?.value.trim();
@@ -86,8 +243,8 @@ async function handleAddressSearch() {
   btn.disabled = true;
 
   try {
-    const rawPlaces = await fetchPlacesByAddress(query);
-    processSearchResults(rawPlaces);
+    rawSearchResults = await fetchPlacesByAddress(query);
+    processSearchResults(rawSearchResults);
   } catch (err) {
     alert(currentLang === 'en' ? 'Location not found.' : '找不到該地點。');
   } finally {
@@ -96,11 +253,12 @@ async function handleAddressSearch() {
   }
 }
 
+// 處理 API 回傳結果
 function processSearchResults(rawPlaces) {
   const filtered = filterPlaces(rawPlaces);
 
   if (filtered.length === 0) {
-    alert(currentLang === 'en' ? 'No matching restaurants found.' : '找不到符合條件的餐廳，請調整篩選。');
+    alert(currentLang === 'en' ? 'No matching restaurants found.' : '找不到符合條件的餐廳，請調整篩選標籤。');
     return;
   }
 
@@ -113,6 +271,7 @@ function processSearchResults(rawPlaces) {
   renderItemList();
 }
 
+// 渲染列表與輪盤
 function renderItemList() {
   const itemList = document.getElementById('itemList');
   const btnReplenish = document.getElementById('btnReplenish');
@@ -122,7 +281,7 @@ function renderItemList() {
     const li = document.createElement('li');
     li.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 8px; margin-bottom: 6px; background: rgba(255,255,255,0.05); border-radius: 8px;";
     li.innerHTML = `
-      <span>${item.name} (${item.votes}票)</span>
+      <span>${item.name} (${item.votes}${currentLang === 'en' ? ' vote(s)' : '票'})</span>
       <div>
         <button onclick="window.adjustVote(${index}, 1)" style="padding: 2px 8px; margin-right: 4px;">+</button>
         <button onclick="window.adjustVote(${index}, -1)" style="padding: 2px 8px; margin-right: 8px;">-</button>
@@ -133,12 +292,13 @@ function renderItemList() {
   });
 
   if (btnReplenish) {
-    btnReplenish.style.display = (currentItems.length < 12 && fetchedPool.length > currentItems.length) ? 'block' : 'none';
+    btnReplenish.style.display = (currentMode === 'restaurant' && currentItems.length < 12 && fetchedPool.length > currentItems.length) ? 'block' : 'none';
   }
 
   drawWheel(currentItems);
 }
 
+// 全域掛載票數控制與刪除
 window.adjustVote = function(index, delta) {
   if (currentItems[index]) {
     currentItems[index].votes = Math.max(1, currentItems[index].votes + delta);
@@ -151,6 +311,7 @@ window.removeItem = function(index) {
   renderItemList();
 };
 
+// 補抓餐廳
 function handleReplenish() {
   const needed = 12 - currentItems.length;
   if (needed <= 0) return;
@@ -166,6 +327,7 @@ function handleReplenish() {
   }
 }
 
+// 手動新增選項
 function handleAddCustomItem() {
   const input = document.getElementById('customInput');
   const name = input?.value.trim();
@@ -173,20 +335,5 @@ function handleAddCustomItem() {
 
   currentItems.push({ name, votes: 1 });
   if (input) input.value = '';
-  renderItemList();
-}
-
-function switchLanguage(lang) {
-  currentLang = lang;
-  renderItemList();
-}
-
-function setDefaultSetMenu() {
-  currentItems = [
-    { name: 'A餐：干炒牛河', votes: 1 },
-    { name: 'B餐：焗豬扒飯', votes: 1 },
-    { name: 'C餐：餐肉煎蛋飯', votes: 1 },
-    { name: 'D餐：雲吞麵', votes: 1 }
-  ];
   renderItemList();
 }
