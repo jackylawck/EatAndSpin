@@ -1,14 +1,14 @@
-<!DOCTYPE html>
-<html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- 🔍 核心 SEO 標籤 (中英文雙語覆蓋) -->
+  <!-- 🔍 核心雙語 SEO 標籤 (Search Engine Optimization) -->
   <title>食一轉 · Eat & Spin | 香港智能搵食輪盤 & HK Restaurant Decision Wheel</title>
-  <meta name="description" content="解決「食乜好」難題！食一轉 (Eat & Spin) 結合香港周邊 GPS 餐廳檢索、地區搜尋、ABCD 餐牌決策與動態加權投票輪盤，一鍵連結 OpenRice 睇食評！Solve your 'What to eat?' dilemma with real-time HK restaurant discovery & weighted voting wheels!">
-  <meta name="keywords" content="食一轉, Eat and Spin, 食乜好, 香港餐廳輪盤, 轉輪盤, 搵餐廳, 觀塘美食, 中環美食, OpenRice 連結, 加權投票, 飲食決策, HK restaurant wheel, what to eat Hong Kong, dining decision app">
-  <meta name="author" content="羅子淇 Jacky Law">
+  <meta name="description" content="解決「食乜好」難題！食一轉 (Eat & Spin) 由羅子淇 (Jacky Law) 開發，結合香港周邊 GPS 餐廳檢索、地區搜尋、ABCD 餐牌決策與動態加權投票輪盤，一鍵連結 OpenRice 睇食評！Solve your 'What to eat?' dilemma with real-time HK restaurant discovery & weighted voting wheels, created by Jacky Law.">
+  <meta name="keywords" content="食一轉, Eat and Spin, 食乜好, 羅子淇, Jacky Law, 香港餐廳輪盤, 轉輪盤, 搵餐廳, 觀塘美食, 中環美食, OpenRice 連結, 加權投票, 飲食決策, HK restaurant wheel, what to eat Hong Kong, dining decision app">
+  <meta name="author" content="羅子淇 (Jacky Law)">
+  <meta name="designer" content="羅子淇 (Jacky Law)">
+  <meta name="copyright" content="© 2026 羅子淇 (Jacky Law)">
   <meta name="robots" content="index, follow">
 
   <!-- 🔗 標準網址 (Canonical URL) 防止重複內容影響排名 -->
@@ -20,8 +20,8 @@
   <!-- 📲 Open Graph 標籤 (WhatsApp / Facebook / LinkedIn 社交分享卡片優化) -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://jackylawck.github.io/EatAndSpin/">
-  <meta property="og:title" content="食一轉 · Eat & Spin | 香港加權投票搵食輪盤">
-  <meta property="og:description" content="解決「食乜好」難題！GPS 周邊餐廳檢索、ABCD 餐牌模式、動態加權輪盤，一鍵查看 OpenRice 食評！">
+  <meta property="og:title" content="食一轉 · Eat & Spin | 香港加權投票搵食輪盤 (by 羅子淇 Jacky Law)">
+  <meta property="og:description" content="解決「食乜好」難題！GPS 周邊餐廳檢索、ABCD 餐牌模式、動態加權輪盤，一鍵查看 OpenRice 食評！由羅子淇 (Jacky Law) 專為香港人打造。">
   <meta property="og:image" content="https://jackylawck.github.io/EatAndSpin/EatandSpinicon-512.png?v=3">
   <meta property="og:site_name" content="食一轉 · Eat & Spin">
   <meta property="og:locale" content="zh_HK">
@@ -29,11 +29,11 @@
 
   <!-- 🐦 Twitter Card 標籤 -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="食一轉 · Eat & Spin | HK Restaurant Decision Wheel">
-  <meta name="twitter:description" content="Solve your 'What to eat?' dilemma with real-time HK restaurant discovery & weighted voting wheels!">
+  <meta name="twitter:title" content="食一轉 · Eat & Spin | HK Restaurant Decision Wheel by Jacky Law">
+  <meta name="twitter:description" content="Solve your 'What to eat?' dilemma with real-time HK restaurant discovery & weighted voting wheels! Created by Jacky Law.">
   <meta name="twitter:image" content="https://jackylawck.github.io/EatAndSpin/EatandSpinicon-512.png?v=3">
 
-  <!-- 💡 JSON-LD 結構化資料 (Schema.org) - 讓 Google 蜘蛛完美識別網頁應用程式屬性 -->
+  <!-- 💡 JSON-LD 結構化資料 (Schema.org) - 完美鏈結創作者個人網站 -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -46,8 +46,15 @@
     "inLanguage": ["zh-HK", "en"],
     "author": {
       "@type": "Person",
-      "name": "Jacky Law",
-      "url": "https://github.com/jackylawck"
+      "name": "羅子淇",
+      "alternateName": "Jacky Law",
+      "url": "https://jackylawck.github.io/jackylawck"
+    },
+    "creator": {
+      "@type": "Person",
+      "name": "羅子淇",
+      "alternateName": "Jacky Law",
+      "url": "https://jackylawck.github.io/jackylawck"
     }
   }
   </script>
@@ -66,88 +73,3 @@
 
   <link rel="stylesheet" href="./css/style.css">
 </head>
-<body>
-
-  <div class="container">
-    <header class="header">
-      <h1 data-i18n="appTitle">食一轉 · Eat & Spin</h1>
-      <div class="lang-switch">
-        <button id="btnLangZh">繁中</button>
-        <button id="btnLangEn">EN</button>
-      </div>
-    </header>
-
-    <!-- 模式切換 Tabs -->
-    <div class="mode-tabs">
-      <button id="tabRestaurant" class="tab-btn active">🏪 搵餐廳 Mode</button>
-      <button id="tabSetMenu" class="tab-btn">🍱 揀 ABCD 餐 Mode</button>
-    </div>
-
-    <!-- 隱私安全聲明 -->
-    <div class="privacy-bar">
-      🔒 <strong>隱私聲明：</strong> 本地運算，絕不上傳或儲存個人位置。
-    </div>
-
-    <!-- 餐廳模式專用：地點搜尋列與預先篩選 -->
-    <div id="locationSearchBox" class="notice-bar">
-      <div class="input-group" style="margin-bottom:8px;">
-        <input type="text" id="locationInput" placeholder="輸入地點 (例: 觀塘 / 中環 / 灣仔)">
-        <button id="btnSearchLoc" class="action-btn">搜尋地點</button>
-      </div>
-
-      <!-- 事前菜式與類型篩選 Filter Chips -->
-      <div class="filter-section" style="margin: 8px 0; text-align: left;">
-        <span style="font-size: 0.85rem; color: #a0aec0; display: block; margin-bottom: 6px;">🎯 預先篩選類別：</span>
-        <div class="chip-group" style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.85rem;">
-          <label class="chip" style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 12px; cursor: pointer;">
-            <input type="checkbox" id="filterNoCafe" checked> 🚫 剔除 Cafe/咖啡店
-          </label>
-          <label class="chip" style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 12px; cursor: pointer;">
-            <input type="checkbox" class="cuisine-filter" value="chinese"> 🥢 中菜/點心
-          </label>
-          <label class="chip" style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 12px; cursor: pointer;">
-            <input type="checkbox" class="cuisine-filter" value="japanese"> 🍣 日韓料理
-          </label>
-          <label class="chip" style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 12px; cursor: pointer;">
-            <input type="checkbox" class="cuisine-filter" value="asian"> 🍜 東南亞/粉麵
-          </label>
-          <label class="chip" style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 12px; cursor: pointer;">
-            <input type="checkbox" class="cuisine-filter" value="western"> 🍕 西式/披薩
-          </label>
-        </div>
-      </div>
-
-      <button id="btnGeo" class="geo-btn" style="margin-top: 6px;">📡 使用目前 GPS 位置 (12間)</button>
-    </div>
-
-    <!-- 輪盤區域 -->
-    <div class="wheel-container">
-      <canvas id="wheelCanvas" width="300" height="300"></canvas>
-    </div>
-
-    <button id="spinBtn" class="spin-btn" data-i18n="spinBtn">食一轉！</button>
-
-    <!-- 中獎結果顯示區（已移至「食一轉」按鈕正下方） -->
-    <div id="resultBox" class="result-box" style="margin-top: 12px; margin-bottom: 12px;"></div>
-
-    <!-- 投票與手動新增區域 -->
-    <div class="vote-section">
-      <h3 id="sectionTitle">🗳️ 餐廳選單與加權投票 (預設各 1 票)</h3>
-
-      <!-- 補抓備用餐廳按鈕 -->
-      <button id="btnReplenish" class="action-btn" style="width:100%; margin-bottom:10px; display:none; background-color: #2ed573;">
-        🔄 補抓附近其他餐廳 (補滿 12 間)
-      </button>
-
-      <div class="input-group">
-        <input type="text" id="customInput" placeholder="自己加選項 (例: F餐/特餐)">
-        <button id="btnAddItem" class="action-btn">新增選項</button>
-      </div>
-      <ul id="itemList" class="item-list"></ul>
-    </div>
-
-  </div>
-
-  <script type="module" src="js/main.js"></script>
-</body>
-</html>
