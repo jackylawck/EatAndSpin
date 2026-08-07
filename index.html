@@ -12,14 +12,17 @@
   <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
 
-  <!-- iOS / Safari 專用 Icon (解決分享選單與加至主畫面顯示問題) -->
-  <link rel="apple-touch-icon" sizes="180x180" href="./EatandSpinicon-192.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="./EatandSpinicon-512.png">
+  <!-- 標準 Favicon (供瀏覽器與 Share Sheet 抓取) -->
+  <link rel="icon" type="image/png" sizes="192x192" href="https://jackylawck.github.io/EatAndSpin/EatandSpinicon-192.png?v=2">
 
-  <!-- Open Graph 標籤 (解決 iOS/WhatsApp/FB 分享時的連結縮圖) -->
+  <!-- iOS / Safari 專用 Apple Touch Icon (必須採用絕對路徑 https://) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="https://jackylawck.github.io/EatAndSpin/EatandSpinicon-192.png?v=2">
+  <link rel="apple-touch-icon" sizes="512x512" href="https://jackylawck.github.io/EatAndSpin/EatandSpinicon-512.png?v=2">
+
+  <!-- Open Graph 標籤 (iOS / WhatsApp / FB 分享選單縮圖，必須採用絕對路徑) -->
   <meta property="og:title" content="食一轉 · Eat & Spin">
   <meta property="og:description" content="香港專屬、結合動態加權投票與地點檢索的餐飲決策 Web App">
-  <meta property="og:image" content="./EatandSpinicon-512.png">
+  <meta property="og:image" content="https://jackylawck.github.io/EatAndSpin/EatandSpinicon-512.png?v=2">
 
   <!-- iOS Web App 主題設定 -->
   <meta name="theme-color" content="#ff4757">
