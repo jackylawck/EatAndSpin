@@ -1,45 +1,42 @@
-// js/api/nearby.js
-import { safeFetch } from './fetcher.js';
-
-// 根據經緯度搜尋 12 間真實餐廳
-export async function fetchNearbyPlaces(lat, lng) {
-  const query = `
-    [out:json][timeout:5];
-    (
-      node["amenity"="restaurant"](around:500, ${lat}, ${lng});
-      node["amenity"="fast_food"](around:500, ${lat}, ${lng});
-      node["amenity"="cafe"](around:500, ${lat}, ${lng});
-    );
-    out body 20;
-  `;
-
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-  const data = await safeFetch(url, {}, 5000);
-
-  if (data && data.elements && data.elements.length > 0) {
-    return data.elements
-      .map(place => ({
-        name: place.tags?.name || place.tags?.['name:zh'] || place.tags?.['name:en'],
-        votes: 1,
-        indoor: true
-      }))
-      .filter(p => p.name)
-      .slice(0, 12);
+// 1. 解析餐廳名稱（英文模式優先抓 name:en）
+export function parseRestaurantName(tags, currentLang = 'zh') {
+  if (currentLang === 'en') {
+    // 英文模式：優先抓 name:en，沒有才退回 name
+    return tags['name:en'] || tags['brand:en'] || tags['name'] || 'Unnamed Restaurant';
   }
-
-  return [];
+  // 中文模式：優先抓 name:zh 或預設 name
+  return tags['name:zh'] || tags['name'] || tags['name:en'] || '未命名餐廳';
 }
 
-// 根據用戶輸入的地名（例：「觀塘」、「中環」）搜尋坐標並拉出 12 間餐廳
-export async function fetchPlacesByAddress(addressText) {
-  const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressText + ', Hong Kong')}`;
-  const geoData = await safeFetch(geoUrl, {}, 5000);
+// 2. 根據 Chips 進行事前篩選 (Filter)
+export function filterPlaces(elements) {
+  const noCafe = document.getElementById('filterNoCafe')?.checked;
+  const selectedCuisines = Array.from(document.querySelectorAll('.cuisine-filter:checked')).map(el => el.value);
 
-  if (geoData && geoData.length > 0) {
-    const lat = parseFloat(geoData[0].lat);
-    const lng = parseFloat(geoData[0].lon);
-    return await fetchNearbyPlaces(lat, lng);
-  }
+  return elements.filter(item => {
+    const tags = item.tags || {};
+    const amenity = (tags.amenity || '').toLowerCase();
+    const cuisine = (tags.cuisine || '').toLowerCase();
+    const name = (tags.name || '').toLowerCase();
 
-  return [];
+    // 剔除 Cafe / 咖啡店
+    if (noCafe) {
+      if (amenity === 'cafe' || cuisine.includes('coffee') || name.includes('coffee') || name.includes('cafe')) {
+        return false;
+      }
+    }
+
+    // 菜式篩選
+    if (selectedCuisines.length > 0) {
+      return selectedCuisines.some(type => {
+        if (type === 'chinese') return cuisine.includes('chinese') || cuisine.includes('cantonese') || cuisine.includes('dim_sum');
+        if (type === 'japanese') return cuisine.includes('japanese') || cuisine.includes('korean') || cuisine.includes('sushi');
+        if (type === 'asian') return cuisine.includes('noodle') || cuisine.includes('thai') || cuisine.includes('vietnamese');
+        if (type === 'western') return cuisine.includes('western') || cuisine.includes('burger') || cuisine.includes('pizza');
+        return false;
+      });
+    }
+
+    return true;
+  });
 }
