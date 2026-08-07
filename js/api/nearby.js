@@ -7,7 +7,7 @@ export function parseRestaurantName(tags, currentLang = 'zh') {
   return tags['name:zh'] || tags['name'] || tags['name:en'] || '未命名餐廳';
 }
 
-// 2. 根據 Chips 晶片按鈕進行篩選 (Filter)
+// 2. 根據 Chips 晶片按鈕進行篩選 (Filter，包含自動過濾已結業地點)
 export function filterPlaces(elements) {
   if (!Array.isArray(elements)) return [];
 
@@ -18,18 +18,32 @@ export function filterPlaces(elements) {
     const tags = item.tags || {};
     if (!tags.name) return false; // 排除沒有登記店名的地點
 
+    // 1. 自動過濾帶有結業/廢棄標記的地點 (Disused / Abandoned / Historic Tags)
+    if (
+      tags.disused || 
+      tags.abandoned || 
+      tags.end_date || 
+      tags['disused:amenity'] || 
+      tags['was:amenity'] || 
+      tags.office === 'closed' ||
+      tags.description?.includes('結業') ||
+      tags.description?.includes('closed')
+    ) {
+      return false;
+    }
+
     const amenity = (tags.amenity || '').toLowerCase();
     const cuisine = (tags.cuisine || '').toLowerCase();
     const name = (tags.name || '').toLowerCase();
 
-    // 剔除 Cafe / 咖啡店
+    // 2. 剔除 Cafe / 咖啡店
     if (noCafe) {
       if (amenity === 'cafe' || cuisine.includes('coffee') || name.includes('coffee') || name.includes('cafe') || name.includes('咖啡')) {
         return false;
       }
     }
 
-    // 菜式篩選
+    // 3. 菜式篩選
     if (selectedCuisines.length > 0) {
       const matches = selectedCuisines.some(type => {
         if (type === 'chinese') return cuisine.includes('chinese') || cuisine.includes('cantonese') || cuisine.includes('dim_sum') || name.includes('中') || name.includes('點心') || name.includes('粵') || name.includes('酒樓') || name.includes('飯');
@@ -47,7 +61,7 @@ export function filterPlaces(elements) {
 
 // 3. 按 GPS 坐標搜尋周邊餐廳 (Overpass API)
 export async function fetchNearbyPlaces(lat, lng) {
-  // 修正 Overpass QL 語法：使用 out center body; 避免語法解析失敗
+  // Overpass QL 語法：只抓取現有營運中的 amenity 設施
   const query = `
     [out:json][timeout:25];
     (
@@ -57,7 +71,7 @@ export async function fetchNearbyPlaces(lat, lng) {
     out center body;
   `;
 
-  // 備用 API 節點列表 (若主伺服器忙碌自動切換備用節點)
+  // 備用 API 節點列表
   const endpoints = [
     'https://overpass-api.de/api/interpreter',
     'https://overpass.kumi.systems/api/interpreter'
