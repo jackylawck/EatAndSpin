@@ -2,10 +2,11 @@ import { fetchNearbyPlaces, fetchPlacesByAddress, filterPlaces, parseRestaurantN
 import { drawWheel, spinWheel } from './wheel.js';
 
 let currentLang = 'zh';
-let fetchedPool = [];   // 備用餐廳池
-let currentItems = [];  // 輪盤目前顯示的餐廳
+let fetchedPool = [];
+let currentItems = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+// DOM 載入後執行
+window.addEventListener('DOMContentLoaded', () => {
   initEvents();
   setDefaultSetMenu();
 });
@@ -35,32 +36,32 @@ function initEvents() {
 
 async function handleGeoSearch() {
   const btn = document.getElementById('btnGeo');
+  if (!btn) return;
   const originalText = btn.innerText;
   btn.innerText = currentLang === 'en' ? '📡 Locating...' : '📡 定位中...';
   btn.disabled = true;
 
   if (!navigator.geolocation) {
-    alert(currentLang === 'en' ? 'Geolocation is not supported.' : '瀏覽器不支援 GPS 定位。');
+    alert(currentLang === 'en' ? 'Geolocation not supported.' : '瀏覽器不支援 GPS 定位。');
     btn.innerText = originalText;
     btn.disabled = false;
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
-    async (position) => {
+    async (pos) => {
       try {
-        const { latitude, longitude } = position.coords;
-        const rawPlaces = await fetchNearbyPlaces(latitude, longitude);
+        const rawPlaces = await fetchNearbyPlaces(pos.coords.latitude, pos.coords.longitude);
         processSearchResults(rawPlaces);
       } catch (err) {
-        alert(currentLang === 'en' ? 'Failed to fetch nearby places.' : '無法取得周邊餐廳資料。');
+        alert(currentLang === 'en' ? 'Failed to fetch places.' : '無法取得周邊餐廳資料。');
       } finally {
         btn.innerText = originalText;
         btn.disabled = false;
       }
     },
     () => {
-      alert(currentLang === 'en' ? 'Geolocation access denied.' : '無法存取 GPS 位置。');
+      alert(currentLang === 'en' ? 'GPS permission denied.' : '無法存取 GPS 位置。');
       btn.innerText = originalText;
       btn.disabled = false;
     }
@@ -69,10 +70,11 @@ async function handleGeoSearch() {
 
 async function handleAddressSearch() {
   const input = document.getElementById('locationInput');
-  const query = input.value.trim();
+  const query = input?.value.trim();
   if (!query) return;
 
   const btn = document.getElementById('btnSearchLoc');
+  if (!btn) return;
   const originalText = btn.innerText;
   btn.innerText = currentLang === 'en' ? 'Searching...' : '搜尋中...';
   btn.disabled = true;
@@ -81,7 +83,7 @@ async function handleAddressSearch() {
     const rawPlaces = await fetchPlacesByAddress(query);
     processSearchResults(rawPlaces);
   } catch (err) {
-    alert(currentLang === 'en' ? 'Location not found.' : '找不到該地點或網路失敗。');
+    alert(currentLang === 'en' ? 'Location not found.' : '找不到該地點。');
   } finally {
     btn.innerText = originalText;
     btn.disabled = false;
@@ -92,7 +94,7 @@ function processSearchResults(rawPlaces) {
   const filtered = filterPlaces(rawPlaces);
 
   if (filtered.length === 0) {
-    alert(currentLang === 'en' ? 'No matching restaurants found.' : '找不到符合條件的餐廳，請試著減少篩選條件。');
+    alert(currentLang === 'en' ? 'No matching restaurants found.' : '找不到符合條件的餐廳，請調整篩選。');
     return;
   }
 
@@ -125,17 +127,11 @@ function renderItemList() {
   });
 
   if (btnReplenish) {
-    if (currentItems.length < 12 && fetchedPool.length > currentItems.length) {
-      btnReplenish.style.display = 'block';
-    } else {
-      btnReplenish.style.display = 'none';
-    }
+    btnReplenish.style.display = (currentItems.length < 12 && fetchedPool.length > currentItems.length) ? 'block' : 'none';
   }
 
   // 安全畫輪盤
-  if (typeof drawWheel === 'function') {
-    drawWheel(currentItems);
-  }
+  drawWheel(currentItems);
 }
 
 window.adjustVote = function(index, delta) {
@@ -161,7 +157,7 @@ function handleReplenish() {
     currentItems.push(...additions);
     renderItemList();
   } else {
-    alert(currentLang === 'en' ? 'No more nearby restaurants available.' : '附近暫無更多符合條件的餐廳！');
+    alert(currentLang === 'en' ? 'No more nearby restaurants.' : '附近暫無更多符合條件的餐廳！');
   }
 }
 
