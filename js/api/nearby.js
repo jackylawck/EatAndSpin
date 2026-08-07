@@ -2,7 +2,7 @@ import { OVERPASS_API_URL, NOMINATIM_API_URL } from './config.js';
 
 // 1. 解析餐廳名稱 (支援英文 / 繁體中文)
 export function parseRestaurantName(tags, currentLang = 'zh') {
-  if (!tags) return '未命名餐廳';
+  if (!tags) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
   if (currentLang === 'en') {
     return tags['name:en'] || tags['brand:en'] || tags['name'] || 'Unnamed Restaurant';
   }
@@ -68,12 +68,12 @@ export async function fetchNearbyPlaces(lat, lng) {
     body: `data=${encodeURIComponent(query)}`
   });
 
-  if (!response.ok) throw new Error('Overpass API Network Error');
+  if (!response.ok) throw new Error('Overpass API Error');
   const data = await response.json();
   return data.elements || [];
 }
 
-// 4. 按地區/地址搜尋餐廳 (Nominatim API + Overpass API)
+// 4. 按地區/地址搜尋餐廳 (Nominatim API)
 export async function fetchPlacesByAddress(address) {
   const baseUrl = NOMINATIM_API_URL || 'https://nominatim.openstreetmap.org';
   const nominatimUrl = `${baseUrl}/search?format=json&q=${encodeURIComponent(address + ' Hong Kong')}`;
