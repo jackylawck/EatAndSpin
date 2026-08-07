@@ -85,13 +85,13 @@ function initEvents() {
   document.getElementById('btnAddItem')?.addEventListener('click', handleAddCustomItem);
   document.getElementById('btnReplenish')?.addEventListener('click', handleReplenish);
 
-  // 轉輪盤
+  // 轉輪盤 (傳入 currentLang 以確保顯示正確語言的抽取結果)
   document.getElementById('spinBtn')?.addEventListener('click', () => {
     if (currentItems.length === 0) {
       alert(currentLang === 'en' ? 'Please add at least one item!' : '請先新增至少一個選項！');
       return;
     }
-    spinWheel(currentItems);
+    spinWheel(currentItems, currentLang);
   });
 }
 
