@@ -1,110 +1,134 @@
-const COLORS = ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#3742fa', '#70a1ff', '#eccc68'];
+// 輪盤顏色盤
+const colors = [
+  '#ff4757', '#2ed573', '#1e90ff', '#ffa502', 
+  '#ff6b81', '#70a1ff', '#eccc68', '#7bed9f',
+  '#ff7f50', '#a4b0be', '#9b59b6', '#34495e'
+];
 
-export class Wheel {
-  constructor(canvasId, items = []) {
-    this.canvas = document.getElementById(canvasId);
-    this.ctx = this.canvas.getContext('2d');
-    this.items = items;
-    this.currentAngle = 0;
-    this.isSpinning = false;
-    this.draw();
+let currentAngle = 0;
+let isSpinning = false;
+
+// 繪製輪盤
+export function drawWheel(items = []) {
+  const canvas = document.getElementById('wheelCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  const width = canvas.width;
+  const height = canvas.height;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = width / 2 - 10;
+
+  ctx.clearRect(0, 0, width, height);
+
+  if (!items || items.length === 0) {
+    // 若無項目，畫一個灰色空輪盤
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = '#334155';
+    ctx.fill();
+    ctx.stroke();
+    return;
   }
 
-  setItems(newItems) {
-    this.items = newItems;
-    this.draw();
+  // 計算總票數加權
+  const totalVotes = items.reduce((sum, item) => sum + (item.votes || 1), 0);
+  let startAngle = currentAngle;
+
+  items.forEach((item, i) => {
+    const sliceAngle = (2 * Math.PI * (item.votes || 1)) / totalVotes;
+    const endAngle = startAngle + sliceAngle;
+
+    // 畫扇形
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#0f172a';
+    ctx.stroke();
+
+    // 寫文字
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(startAngle + sliceAngle / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px sans-serif';
+    
+    // 限制文字長度
+    const label = item.name.length > 10 ? item.name.substring(0, 9) + '...' : item.name;
+    ctx.fillText(label, radius - 15, 5);
+    ctx.restore();
+
+    startAngle = endAngle;
+  });
+
+  // 畫中心圓鈕
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+}
+
+// 轉動輪盤動畫
+export function spinWheel(items = []) {
+  if (isSpinning || items.length === 0) return;
+  isSpinning = true;
+
+  const totalVotes = items.reduce((sum, item) => sum + (item.votes || 1), 0);
+  const randomRotation = Math.floor(Math.random() * 360) + 1440; // 至少轉 4 圈
+  const startAngleDegree = (currentAngle * 180) / Math.PI;
+  const targetDegree = startAngleDegree + randomRotation;
+
+  let start = null;
+  const duration = 4000; // 4 秒
+
+  function animate(timestamp) {
+    if (!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    
+    // Ease-out 減速效果
+    const easeOut = 1 - Math.pow(1 - progress, 3);
+    const currentDeg = startAngleDegree + (randomRotation * easeOut);
+    
+    currentAngle = (currentDeg * Math.PI) / 180;
+    drawWheel(items);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      isSpinning = false;
+      calculateResult(items, totalVotes);
+    }
   }
 
-  draw() {
-    if (this.items.length === 0) return;
+  requestAnimationFrame(animate);
+}
 
-    const width = this.canvas.width;
-    const height = this.canvas.height;
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = width / 2 - 10;
+// 計算中獎結果
+function calculateResult(items, totalVotes) {
+  // 頂部箭頭角度為 270 度 (1.5 * Math.PI)
+  let normalizedAngle = (1.5 * Math.PI - (currentAngle % (2 * Math.PI))) % (2 * Math.PI);
+  if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
 
-    const totalVotes = this.items.reduce((sum, item) => sum + (item.votes || 1), 0);
-
-    this.ctx.clearRect(0, 0, width, height);
-
-    let startAngle = this.currentAngle;
-
-    this.items.forEach((item, index) => {
-      const votes = item.votes || 1;
-      const sliceAngle = (votes / totalVotes) * (2 * Math.PI);
-
-      this.ctx.beginPath();
-      this.ctx.moveTo(centerX, centerY);
-      this.ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
-      this.ctx.fillStyle = COLORS[index % COLORS.length];
-      this.ctx.fill();
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeStyle = '#1e293b';
-      this.ctx.stroke();
-
-      this.ctx.save();
-      this.ctx.translate(centerX, centerY);
-      this.ctx.rotate(startAngle + sliceAngle / 2);
-      this.ctx.textAlign = 'right';
-      this.ctx.fillStyle = '#ffffff';
-      this.ctx.font = 'bold 13px -apple-system, sans-serif';
-      this.ctx.fillText(`${item.name} (${votes}票)`, radius - 15, 5);
-      this.ctx.restore();
-
-      startAngle += sliceAngle;
-    });
-
-    this.ctx.beginPath();
-    this.ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
-    this.ctx.fillStyle = '#1e293b';
-    this.ctx.fill();
-    this.ctx.lineWidth = 3;
-    this.ctx.strokeStyle = '#ffffff';
-    this.ctx.stroke();
-  }
-
-  spin(onComplete) {
-    if (this.isSpinning || this.items.length === 0) return;
-
-    this.isSpinning = true;
-    const spinAngle = Math.PI * 2 * (5 + Math.random() * 5);
-    const duration = 4000;
-    const startAngle = this.currentAngle;
-    const startTime = performance.now();
-
-    const animate = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      
-      this.currentAngle = startAngle + spinAngle * easeOut;
-      this.draw();
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        this.isSpinning = false;
-
-        const totalVotes = this.items.reduce((sum, item) => sum + (item.votes || 1), 0);
-        const normalizedAngle = (1.5 * Math.PI - (this.currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-
-        let currentAccumAngle = 0;
-        let selectedItem = this.items[0];
-
-        for (let item of this.items) {
-          const sliceAngle = ((item.votes || 1) / totalVotes) * (2 * Math.PI);
-          if (normalizedAngle >= currentAccumAngle && normalizedAngle < currentAccumAngle + sliceAngle) {
-            selectedItem = item;
-            break;
-          }
-          currentAccumAngle += sliceAngle;
-        }
-
-        if (onComplete) onComplete(selectedItem);
+  let accumulatedAngle = 0;
+  for (let item of items) {
+    const sliceAngle = (2 * Math.PI * (item.votes || 1)) / totalVotes;
+    if (normalizedAngle >= accumulatedAngle && normalizedAngle < accumulatedAngle + sliceAngle) {
+      const resultBox = document.getElementById('resultBox');
+      if (resultBox) {
+        resultBox.innerHTML = `🎉 今日食：<strong>${item.name}</strong>！`;
+        resultBox.style.display = 'block';
       }
-    };
-
-    requestAnimationFrame(animate);
+      break;
+    }
+    accumulatedAngle += sliceAngle;
   }
 }
