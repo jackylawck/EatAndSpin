@@ -23,7 +23,6 @@ export function drawWheel(items = []) {
   ctx.clearRect(0, 0, width, height);
 
   if (!items || items.length === 0) {
-    // 若無項目，畫一個灰色空輪盤
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
     ctx.fillStyle = '#334155';
@@ -32,7 +31,6 @@ export function drawWheel(items = []) {
     return;
   }
 
-  // 計算總票數加權
   const totalVotes = items.reduce((sum, item) => sum + (item.votes || 1), 0);
   let startAngle = currentAngle;
 
@@ -40,7 +38,6 @@ export function drawWheel(items = []) {
     const sliceAngle = (2 * Math.PI * (item.votes || 1)) / totalVotes;
     const endAngle = startAngle + sliceAngle;
 
-    // 畫扇形
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
     ctx.arc(centerX, centerY, radius, startAngle, endAngle);
@@ -51,7 +48,6 @@ export function drawWheel(items = []) {
     ctx.strokeStyle = '#0f172a';
     ctx.stroke();
 
-    // 寫文字
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate(startAngle + sliceAngle / 2);
@@ -59,7 +55,6 @@ export function drawWheel(items = []) {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px sans-serif';
     
-    // 限制文字長度
     const label = item.name.length > 10 ? item.name.substring(0, 9) + '...' : item.name;
     ctx.fillText(label, radius - 15, 5);
     ctx.restore();
@@ -67,7 +62,6 @@ export function drawWheel(items = []) {
     startAngle = endAngle;
   });
 
-  // 畫中心圓鈕
   ctx.beginPath();
   ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
   ctx.fillStyle = '#0f172a';
@@ -77,24 +71,21 @@ export function drawWheel(items = []) {
   ctx.stroke();
 }
 
-// 轉動輪盤動畫
-export function spinWheel(items = []) {
+// 轉動輪盤動畫 (傳入 lang 參數)
+export function spinWheel(items = [], lang = 'zh') {
   if (isSpinning || items.length === 0) return;
   isSpinning = true;
 
   const totalVotes = items.reduce((sum, item) => sum + (item.votes || 1), 0);
-  const randomRotation = Math.floor(Math.random() * 360) + 1440; // 至少轉 4 圈
+  const randomRotation = Math.floor(Math.random() * 360) + 1440;
   const startAngleDegree = (currentAngle * 180) / Math.PI;
-  const targetDegree = startAngleDegree + randomRotation;
 
   let start = null;
-  const duration = 4000; // 4 秒
+  const duration = 4000;
 
   function animate(timestamp) {
     if (!start) start = timestamp;
     const progress = Math.min((timestamp - start) / duration, 1);
-    
-    // Ease-out 減速效果
     const easeOut = 1 - Math.pow(1 - progress, 3);
     const currentDeg = startAngleDegree + (randomRotation * easeOut);
     
@@ -105,16 +96,15 @@ export function spinWheel(items = []) {
       requestAnimationFrame(animate);
     } else {
       isSpinning = false;
-      calculateResult(items, totalVotes);
+      calculateResult(items, totalVotes, lang);
     }
   }
 
   requestAnimationFrame(animate);
 }
 
-// 計算中獎結果
-function calculateResult(items, totalVotes) {
-  // 頂部箭頭角度為 270 度 (1.5 * Math.PI)
+// 計算中獎結果 (支援雙語顯示)
+function calculateResult(items, totalVotes, lang = 'zh') {
   let normalizedAngle = (1.5 * Math.PI - (currentAngle % (2 * Math.PI))) % (2 * Math.PI);
   if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
 
@@ -124,7 +114,8 @@ function calculateResult(items, totalVotes) {
     if (normalizedAngle >= accumulatedAngle && normalizedAngle < accumulatedAngle + sliceAngle) {
       const resultBox = document.getElementById('resultBox');
       if (resultBox) {
-        resultBox.innerHTML = `🎉 今日食：<strong>${item.name}</strong>！`;
+        const prefix = lang === 'en' ? "🎉 Today's Choice: " : "🎉 今日食：";
+        resultBox.innerHTML = `${prefix}<strong>${item.name}</strong>！`;
         resultBox.style.display = 'block';
       }
       break;
