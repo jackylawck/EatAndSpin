@@ -45,13 +45,23 @@ export function filterPlaces(elements) {
 export async function fetchNearbyPlaces(lat, lng) {
   const url = 'https://places.googleapis.com/v1/places:searchText';
 
+  const latitude = parseFloat(lat);
+  const longitude = parseFloat(lng);
+
+  if (isNaN(latitude) || isNaN(longitude)) {
+    throw new Error('Invalid GPS Coordinates');
+  }
+
   const requestBody = {
     textQuery: '餐廳',
     maxResultCount: 20,
     locationBias: {
       circle: {
-        center: { latitude: lat, longitude: lng },
-        radius: 800
+        center: {
+          latitude: latitude,
+          longitude: longitude
+        },
+        radius: 800.0
       }
     }
   };
@@ -67,16 +77,16 @@ export async function fetchNearbyPlaces(lat, lng) {
       body: JSON.stringify(requestBody)
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('API Fail:', errorData);
-      throw new Error(`Status: ${response.status}`);
+      console.error('Google API Raw Response Error:', data);
+      throw new Error(`Google API 400 Error: ${data.error?.message || response.statusText}`);
     }
 
-    const data = await response.json();
     return (data.places || []).filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
   } catch (err) {
-    console.error('fetchNearbyPlaces error:', err);
+    console.error('fetchNearbyPlaces failed:', err);
     throw err;
   }
 }
@@ -101,16 +111,16 @@ export async function fetchPlacesByAddress(address) {
       body: JSON.stringify(requestBody)
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Text Search Fail:', errorData);
-      throw new Error(`Status: ${response.status}`);
+      console.error('Google Text Search Raw Response Error:', data);
+      throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
-    const data = await response.json();
     return (data.places || []).filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
   } catch (err) {
-    console.error('fetchPlacesByAddress error:', err);
+    console.error('fetchPlacesByAddress failed:', err);
     throw err;
   }
 }
