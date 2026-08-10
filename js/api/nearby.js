@@ -1,10 +1,12 @@
 import { GOOGLE_API_KEY } from '../config.js';
 
+// 1. 解析餐廳名稱
 export function parseRestaurantName(place, currentLang = 'zh') {
   if (!place) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
   return place.displayName?.text || place.name || '未命名餐廳';
 }
 
+// 2. 根據 Chips 晶片按鈕進行篩選
 export function filterPlaces(elements) {
   if (!Array.isArray(elements)) return [];
 
@@ -16,12 +18,14 @@ export function filterPlaces(elements) {
     const primaryType = (item.primaryType || '').toLowerCase();
     const types = (item.types || []).join(' ').toLowerCase();
 
+    // 剔除 Cafe / 咖啡店
     if (noCafe) {
       if (primaryType.includes('cafe') || primaryType.includes('coffee') || name.includes('coffee') || name.includes('cafe') || name.includes('咖啡')) {
         return false;
       }
     }
 
+    // 菜式類別篩選
     if (selectedCuisines.length > 0) {
       const matches = selectedCuisines.some(type => {
         if (type === 'chinese') return types.includes('chinese') || types.includes('cantonese') || name.includes('中') || name.includes('點心') || name.includes('粵') || name.includes('酒樓') || name.includes('飯');
@@ -37,16 +41,17 @@ export function filterPlaces(elements) {
   });
 }
 
+// 3. 按 GPS 坐標搜尋周邊餐廳
 export async function fetchNearbyPlaces(lat, lng) {
   const url = 'https://places.googleapis.com/v1/places:searchText';
 
   const requestBody = {
-    textQuery: 'restaurant',
+    textQuery: '餐廳',
     maxResultCount: 20,
     locationBias: {
       circle: {
         center: { latitude: lat, longitude: lng },
-        radius: 800.0
+        radius: 800
       }
     }
   };
@@ -76,11 +81,12 @@ export async function fetchNearbyPlaces(lat, lng) {
   }
 }
 
+// 4. 按地區/地址搜尋餐廳
 export async function fetchPlacesByAddress(address) {
   const url = 'https://places.googleapis.com/v1/places:searchText';
 
   const requestBody = {
-    textQuery: `${address} Hong Kong restaurant`,
+    textQuery: `${address} 香港 餐廳`,
     maxResultCount: 20
   };
 
