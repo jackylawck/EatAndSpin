@@ -1,13 +1,13 @@
-// 1. 解析餐廳名稱 (支援英文 / 繁體中文)
-export function parseRestaurantName(tags, currentLang = 'zh') {
-  if (!tags) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
-  if (currentLang === 'en') {
-    return tags['name:en'] || tags['brand:en'] || tags['name'] || 'Unnamed Restaurant';
-  }
-  return tags['name:zh'] || tags['name'] || tags['name:en'] || '未命名餐廳';
+// 🔑 請在此處填入你的 Google Places API Key
+const GOOGLE_API_KEY = 'AIzaSyAEdDoKZ_0yN8--F8d99ltxrKTXKRg0FBo';
+
+// 1. 解析餐廳名稱 (Google API 已內建語言對應)
+export function parseRestaurantName(place, currentLang = 'zh') {
+  if (!place) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
+  return place.displayName?.text || place.name || '未命名餐廳';
 }
 
-// 2. 根據 Chips 晶片按鈕進行篩選 (Filter，包含自動過濾已結業地點)
+// 2. 根據 Chips 晶片按鈕進行篩選
 export function filterPlaces(elements) {
   if (!Array.isArray(elements)) return [];
 
@@ -15,41 +15,24 @@ export function filterPlaces(elements) {
   const selectedCuisines = Array.from(document.querySelectorAll('.cuisine-filter:checked')).map(el => el.value);
 
   return elements.filter(item => {
-    const tags = item.tags || {};
-    if (!tags.name) return false; // 排除沒有登記店名的地點
+    const name = (item.displayName?.text || '').toLowerCase();
+    const primaryType = (item.primaryType || '').toLowerCase();
+    const types = (item.types || []).join(' ').toLowerCase();
 
-    // 1. 自動過濾帶有結業/廢棄標記的地點 (Disused / Abandoned / Historic Tags)
-    if (
-      tags.disused || 
-      tags.abandoned || 
-      tags.end_date || 
-      tags['disused:amenity'] || 
-      tags['was:amenity'] || 
-      tags.office === 'closed' ||
-      tags.description?.includes('結業') ||
-      tags.description?.includes('closed')
-    ) {
-      return false;
-    }
-
-    const amenity = (tags.amenity || '').toLowerCase();
-    const cuisine = (tags.cuisine || '').toLowerCase();
-    const name = (tags.name || '').toLowerCase();
-
-    // 2. 剔除 Cafe / 咖啡店
+    // 剔除 Cafe / 咖啡店
     if (noCafe) {
-      if (amenity === 'cafe' || cuisine.includes('coffee') || name.includes('coffee') || name.includes('cafe') || name.includes('咖啡')) {
+      if (primaryType.includes('cafe') || primaryType.includes('coffee') || name.includes('coffee') || name.includes('cafe') || name.includes('咖啡')) {
         return false;
       }
     }
 
-    // 3. 菜式篩選
+    // 菜式篩選
     if (selectedCuisines.length > 0) {
       const matches = selectedCuisines.some(type => {
-        if (type === 'chinese') return cuisine.includes('chinese') || cuisine.includes('cantonese') || cuisine.includes('dim_sum') || name.includes('中') || name.includes('點心') || name.includes('粵') || name.includes('酒樓') || name.includes('飯');
-        if (type === 'japanese') return cuisine.includes('japanese') || cuisine.includes('korean') || cuisine.includes('sushi') || name.includes('日') || name.includes('韓') || name.includes('壽司') || name.includes('居酒屋');
-        if (type === 'asian') return cuisine.includes('noodle') || cuisine.includes('thai') || cuisine.includes('vietnamese') || name.includes('麵') || name.includes('泰') || name.includes('越') || name.includes('米線');
-        if (type === 'western') return cuisine.includes('western') || cuisine.includes('burger') || cuisine.includes('pizza') || cuisine.includes('italian') || name.includes('西') || name.includes('披薩') || name.includes('意');
+        if (type === 'chinese') return types.includes('chinese') || types.includes('cantonese') || name.includes('中') || name.includes('點心') || name.includes('粵') || name.includes('酒樓') || name.includes('飯');
+        if (type === 'japanese') return types.includes('japanese') || types.includes('korean') || name.includes('日') || name.includes('韓') || name.includes('壽司') || name.includes('居酒屋');
+        if (type === 'asian') return types.includes('asian') || types.includes('noodle') || types.includes('thai') || types.includes('vietnamese') || name.includes('麵') || name.includes('泰') || name.includes('越') || name.includes('米線');
+        if (type === 'western') return types.includes('western') || types.includes('pizza') || types.includes('italian') || types.includes('burger') || name.includes('西') || name.includes('披薩') || name.includes('意');
         return false;
       });
       if (!matches) return false;
@@ -59,60 +42,67 @@ export function filterPlaces(elements) {
   });
 }
 
-// 3. 按 GPS 坐標搜尋周邊餐廳 (Overpass API)
+// 3. 按 GPS 坐標搜尋周邊營業中餐廳 (Google Places Nearby Search API)
 export async function fetchNearbyPlaces(lat, lng) {
-  // Overpass QL 語法：只抓取現有營運中的 amenity 設施
-  const query = `
-    [out:json][timeout:25];
-    (
-      node["amenity"~"restaurant|fast_food|cafe|food_court"](around:1000, ${lat}, ${lng});
-      way["amenity"~"restaurant|fast_food|cafe|food_court"](around:1000, ${lat}, ${lng});
-    );
-    out center body;
-  `;
+  const url = 'https://places.googleapis.com/v1/places:searchNearby';
 
-  // 備用 API 節點列表
-  const endpoints = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter'
-  ];
-
-  for (const url of endpoints) {
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-        },
-        body: `data=${encodeURIComponent(query)}`
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.elements || [];
+  const requestBody = {
+    includedTypes: ['restaurant', 'fast_food_restaurant'],
+    maxResultCount: 20,
+    locationRestriction: {
+      circle: {
+        center: { latitude: lat, longitude: lng },
+        radius: 800.0 // 搜尋周圍 800 米
       }
-    } catch (e) {
-      console.warn(`Endpoint ${url} failed, trying next mirror...`, e);
     }
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': GOOGLE_API_KEY,
+      'X-Goog-FieldMask': 'places.displayName,places.primaryType,places.types,places.businessStatus'
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    throw new Error('Google Places API Error');
   }
 
-  throw new Error('Overpass API Error');
+  const data = await response.json();
+  const places = data.places || [];
+
+  // 自動過濾非營業中 (OPERATIONAL) 的地點
+  return places.filter(place => place.businessStatus === 'OPERATIONAL');
 }
 
-// 4. 按地區/地址搜尋餐廳 (Nominatim API)
+// 4. 按地區/地址搜尋餐廳 (Google Text Search API)
 export async function fetchPlacesByAddress(address) {
-  const baseUrl = 'https://nominatim.openstreetmap.org';
-  const nominatimUrl = `${baseUrl}/search?format=json&q=${encodeURIComponent(address + ' Hong Kong')}`;
-  
-  const geoRes = await fetch(nominatimUrl);
-  const geoData = await geoRes.json();
+  const url = 'https://places.googleapis.com/v1/places:searchText';
 
-  if (!geoData || geoData.length === 0) {
-    throw new Error('LOCATION_NOT_FOUND');
+  const requestBody = {
+    textQuery: `${address} Hong Kong restaurant`,
+    maxResultCount: 20
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': GOOGLE_API_KEY,
+      'X-Goog-FieldMask': 'places.displayName,places.primaryType,places.types,places.businessStatus'
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    throw new Error('Google Places Text Search Error');
   }
 
-  const lat = parseFloat(geoData[0].lat);
-  const lon = parseFloat(geoData[0].lon);
+  const data = await response.json();
+  const places = data.places || [];
 
-  return await fetchNearbyPlaces(lat, lon);
+  return places.filter(place => place.businessStatus === 'OPERATIONAL');
 }
