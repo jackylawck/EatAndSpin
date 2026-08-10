@@ -8,6 +8,15 @@ const colors = [
 let currentAngle = 0;
 let isSpinning = false;
 
+// 輔助函式：確保 100% 提取出字串名稱
+function getItemName(item) {
+  if (!item) return '';
+  if (typeof item === 'string') return item;
+  if (typeof item.name === 'string') return item.name;
+  if (item.displayName?.text) return item.displayName.text;
+  return String(item);
+}
+
 // 繪製輪盤
 export function drawWheel(items = []) {
   const canvas = document.getElementById('wheelCanvas');
@@ -31,11 +40,12 @@ export function drawWheel(items = []) {
     return;
   }
 
-  const totalVotes = items.reduce((sum, item) => sum + (item.votes || 1), 0);
+  const totalVotes = items.reduce((sum, item) => sum + (typeof item === 'object' && item.votes ? item.votes : 1), 0);
   let startAngle = currentAngle;
 
   items.forEach((item, i) => {
-    const sliceAngle = (2 * Math.PI * (item.votes || 1)) / totalVotes;
+    const votes = typeof item === 'object' && item.votes ? item.votes : 1;
+    const sliceAngle = (2 * Math.PI * votes) / totalVotes;
     const endAngle = startAngle + sliceAngle;
 
     ctx.beginPath();
@@ -55,13 +65,17 @@ export function drawWheel(items = []) {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px sans-serif';
     
-    const label = item.name.length > 10 ? item.name.substring(0, 9) + '...' : item.name;
+    // 防呆處理餐廳名稱，防止因為 undefined 報錯
+    const itemName = getItemName(item);
+    const label = itemName.length > 10 ? itemName.substring(0, 9) + '...' : itemName;
+    
     ctx.fillText(label, radius - 15, 5);
     ctx.restore();
 
     startAngle = endAngle;
   });
 
+  // 中心圓鈕
   ctx.beginPath();
   ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
   ctx.fillStyle = '#0f172a';
@@ -76,7 +90,7 @@ export function spinWheel(items = [], lang = 'zh') {
   if (isSpinning || items.length === 0) return;
   isSpinning = true;
 
-  const totalVotes = items.reduce((sum, item) => sum + (item.votes || 1), 0);
+  const totalVotes = items.reduce((sum, item) => sum + (typeof item === 'object' && item.votes ? item.votes : 1), 0);
   const randomRotation = Math.floor(Math.random() * 360) + 1440;
   const startAngleDegree = (currentAngle * 180) / Math.PI;
 
@@ -110,19 +124,22 @@ function calculateResult(items, totalVotes, lang = 'zh') {
 
   let accumulatedAngle = 0;
   for (let item of items) {
-    const sliceAngle = (2 * Math.PI * (item.votes || 1)) / totalVotes;
+    const votes = typeof item === 'object' && item.votes ? item.votes : 1;
+    const sliceAngle = (2 * Math.PI * votes) / totalVotes;
+    
     if (normalizedAngle >= accumulatedAngle && normalizedAngle < accumulatedAngle + sliceAngle) {
       const resultBox = document.getElementById('resultBox');
       if (resultBox) {
+        const itemName = getItemName(item);
         // 動態產生 OpenRice 搜尋網址
-        const openRiceUrl = `https://www.openrice.com/zh/hongkong/restaurants?where=${encodeURIComponent(item.name)}`;
+        const openRiceUrl = `https://www.openrice.com/zh/hongkong/restaurants?where=${encodeURIComponent(itemName)}`;
         
         const prefix = lang === 'en' ? "🎉 Today's Choice: " : "🎉 今日食：";
         const btnText = lang === 'en' ? "🔍 View on OpenRice" : "🔍 喺 OpenRice 睇食評 / 菜單";
 
         resultBox.innerHTML = `
           <div style="font-size: 1.1rem; margin-bottom: 8px;">
-            ${prefix}<strong>${item.name}</strong>！
+            ${prefix}<strong>${itemName}</strong>！
           </div>
           <a href="${openRiceUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 6px 14px; background-color: #ffb900; color: #1e1e1e; font-size: 0.85rem; font-weight: bold; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
             ${btnText}
