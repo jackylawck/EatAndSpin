@@ -1,6 +1,6 @@
 import { GOOGLE_API_KEY } from '../config.js';
 
-// 1. 解析餐廳名稱 (Google API 已內建語言對應)
+// 1. 解析餐廳名稱
 export function parseRestaurantName(place, currentLang = 'zh') {
   if (!place) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
   return place.displayName?.text || place.name || '未命名餐廳';
@@ -14,7 +14,7 @@ export function filterPlaces(elements) {
   const selectedCuisines = Array.from(document.querySelectorAll('.cuisine-filter:checked')).map(el => el.value);
 
   return elements.filter(item => {
-    const name = (item.displayName?.text || '').toLowerCase();
+    const name = (item.displayName?.text || item.name || '').toLowerCase();
     const primaryType = (item.primaryType || '').toLowerCase();
     const types = (item.types || []).join(' ').toLowerCase();
 
@@ -41,7 +41,7 @@ export function filterPlaces(elements) {
   });
 }
 
-// 3. 按 GPS 坐標搜尋周邊營業中餐廳 (Google Places Nearby Search API)
+// 3. 按 GPS 坐標搜尋周邊餐廳 (Google Places Nearby Search API)
 export async function fetchNearbyPlaces(lat, lng) {
   const url = 'https://places.googleapis.com/v1/places:searchNearby';
 
@@ -51,30 +51,37 @@ export async function fetchNearbyPlaces(lat, lng) {
     locationRestriction: {
       circle: {
         center: { latitude: lat, longitude: lng },
-        radius: 800.0 // 搜尋周圍 800 米
+        radius: 1000.0
       }
     }
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': GOOGLE_API_KEY,
-      'X-Goog-FieldMask': 'places.displayName,places.primaryType,places.types,places.businessStatus'
-    },
-    body: JSON.stringify(requestBody)
-  });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_API_KEY,
+        'X-Goog-FieldMask': 'places.displayName,places.primaryType,places.types,places.businessStatus'
+      },
+      body: JSON.stringify(requestBody)
+    });
 
-  if (!response.ok) {
-    throw new Error('Google Places API Error');
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Google API Error Details:', errorData);
+      throw new Error(`Google Places API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const places = data.places || [];
+
+    // 自動過濾非營業中 (OPERATIONAL) 的地點
+    return places.filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
+  } catch (err) {
+    console.error('fetchNearbyPlaces failed:', err);
+    throw err;
   }
-
-  const data = await response.json();
-  const places = data.places || [];
-
-  // 自動過濾非營業中 (OPERATIONAL) 的地點
-  return places.filter(place => place.businessStatus === 'OPERATIONAL');
 }
 
 // 4. 按地區/地址搜尋餐廳 (Google Text Search API)
@@ -86,22 +93,29 @@ export async function fetchPlacesByAddress(address) {
     maxResultCount: 20
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': GOOGLE_API_KEY,
-      'X-Goog-FieldMask': 'places.displayName,places.primaryType,places.types,places.businessStatus'
-    },
-    body: JSON.stringify(requestBody)
-  });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_API_KEY,
+        'X-Goog-FieldMask': 'places.displayName,places.primaryType,places.types,places.businessStatus'
+      },
+      body: JSON.stringify(requestBody)
+    });
 
-  if (!response.ok) {
-    throw new Error('Google Places Text Search Error');
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Google Text Search API Error Details:', errorData);
+      throw new Error(`Google Text Search Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const places = data.places || [];
+
+    return places.filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
+  } catch (err) {
+    console.error('fetchPlacesByAddress failed:', err);
+    throw err;
   }
-
-  const data = await response.json();
-  const places = data.places || [];
-
-  return places.filter(place => place.businessStatus === 'OPERATIONAL');
 }
