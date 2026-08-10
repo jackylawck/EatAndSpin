@@ -1,4 +1,4 @@
-export const GOOGLE_API_KEY = 'AIzaSyAEdDoKZ_0yN8--F8d99ItxrKTXKRg0FBo';
+export const GOOGLE_API_KEY = 'AIzaSyAEdDoKZ_0yN8--F8d99ltxrKTXKRg0FBo';
 
 export const APP_CONFIG = {
   DEFAULT_LANG: 'zh',
