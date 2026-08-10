@@ -250,8 +250,9 @@ function processSearchResults(rawPlaces) {
     return;
   }
 
+  // ✅ 核心修復：把原本的 item.tags 改為傳入 item 物件本身
   fetchedPool = filtered.map(item => ({
-    name: parseRestaurantName(item.tags, currentLang),
+    name: parseRestaurantName(item, currentLang),
     votes: 1
   }));
 
