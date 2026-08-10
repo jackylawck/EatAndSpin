@@ -1,1 +1,2 @@
-export const GOOGLE_API_KEY = 'AIzaSyAEdDoKZ_0yN8--F8d99ItxrKTXKRg0FBo';
+// 範本檔（不含真 Key）
+export const GOOGLE_API_KEY = 'YOUR_GOOGLE_API_KEY';
