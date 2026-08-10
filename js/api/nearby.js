@@ -41,17 +41,17 @@ export function filterPlaces(elements) {
   });
 }
 
-// 3. 按 GPS 坐標搜尋周邊餐廳 (Google Places Nearby Search API)
+// 3. 按 GPS 坐標搜尋周邊餐廳 (相容性更高的 Text Search 模式)
 export async function fetchNearbyPlaces(lat, lng) {
-  const url = 'https://places.googleapis.com/v1/places:searchNearby';
+  const url = 'https://places.googleapis.com/v1/places:searchText';
 
   const requestBody = {
-    includedTypes: ['restaurant', 'fast_food_restaurant'],
+    textQuery: 'restaurant',
     maxResultCount: 20,
-    locationRestriction: {
+    locationBias: {
       circle: {
         center: { latitude: lat, longitude: lng },
-        radius: 1000.0
+        radius: 800.0
       }
     }
   };
@@ -69,22 +69,19 @@ export async function fetchNearbyPlaces(lat, lng) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Google API Error Details:', errorData);
-      throw new Error(`Google Places API Error: ${response.status}`);
+      console.error('API Fail:', errorData);
+      throw new Error(`Status: ${response.status}`);
     }
 
     const data = await response.json();
-    const places = data.places || [];
-
-    // 自動過濾非營業中 (OPERATIONAL) 的地點
-    return places.filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
+    return (data.places || []).filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
   } catch (err) {
-    console.error('fetchNearbyPlaces failed:', err);
+    console.error('fetchNearbyPlaces error:', err);
     throw err;
   }
 }
 
-// 4. 按地區/地址搜尋餐廳 (Google Text Search API)
+// 4. 按地區/地址搜尋餐廳
 export async function fetchPlacesByAddress(address) {
   const url = 'https://places.googleapis.com/v1/places:searchText';
 
@@ -106,16 +103,14 @@ export async function fetchPlacesByAddress(address) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Google Text Search API Error Details:', errorData);
-      throw new Error(`Google Text Search Error: ${response.status}`);
+      console.error('Text Search Fail:', errorData);
+      throw new Error(`Status: ${response.status}`);
     }
 
     const data = await response.json();
-    const places = data.places || [];
-
-    return places.filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
+    return (data.places || []).filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
   } catch (err) {
-    console.error('fetchPlacesByAddress failed:', err);
+    console.error('fetchPlacesByAddress error:', err);
     throw err;
   }
 }
