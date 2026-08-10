@@ -1,9 +1,10 @@
 import { GOOGLE_API_KEY } from '../config.js';
 
-// 1. 解析餐廳名稱
+// 1. 解析餐廳名稱 (相容各種資料結構)
 export function parseRestaurantName(place, currentLang = 'zh') {
   if (!place) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
-  return place.displayName?.text || place.name || '未命名餐廳';
+  if (typeof place === 'string') return place;
+  return place.displayName?.text || place.name || (currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳');
 }
 
 // 2. 根據 Chips 晶片按鈕進行篩選
@@ -57,10 +58,7 @@ export async function fetchNearbyPlaces(lat, lng) {
     maxResultCount: 20,
     locationBias: {
       circle: {
-        center: {
-          latitude: latitude,
-          longitude: longitude
-        },
+        center: { latitude: latitude, longitude: longitude },
         radius: 800.0
       }
     }
@@ -81,10 +79,16 @@ export async function fetchNearbyPlaces(lat, lng) {
 
     if (!response.ok) {
       console.error('Google API Raw Response Error:', data);
-      throw new Error(`Google API 400 Error: ${data.error?.message || response.statusText}`);
+      throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
-    return (data.places || []).filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
+    // 自動將 displayName.text 轉為 place.name，供轉盤元件直接讀取
+    return (data.places || [])
+      .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
+      .map(place => ({
+        ...place,
+        name: place.displayName?.text || '未命名餐廳'
+      }));
   } catch (err) {
     console.error('fetchNearbyPlaces failed:', err);
     throw err;
@@ -118,7 +122,12 @@ export async function fetchPlacesByAddress(address) {
       throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
-    return (data.places || []).filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL');
+    return (data.places || [])
+      .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
+      .map(place => ({
+        ...place,
+        name: place.displayName?.text || '未命名餐廳'
+      }));
   } catch (err) {
     console.error('fetchPlacesByAddress failed:', err);
     throw err;
