@@ -4,7 +4,10 @@ import { GOOGLE_API_KEY } from '../config.js';
 export function parseRestaurantName(place, currentLang = 'zh') {
   if (!place) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
   if (typeof place === 'string') return place;
-  return place.displayName?.text || place.name || (currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳');
+  if (place.name && typeof place.name === 'string' && !place.name.startsWith('places/')) {
+    return place.name;
+  }
+  return place.displayName?.text || (currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳');
 }
 
 // 2. 根據 Chips 晶片按鈕進行篩選
@@ -15,7 +18,7 @@ export function filterPlaces(elements) {
   const selectedCuisines = Array.from(document.querySelectorAll('.cuisine-filter:checked')).map(el => el.value);
 
   return elements.filter(item => {
-    const name = (item.displayName?.text || item.name || '').toLowerCase();
+    const name = (item.name || item.displayName?.text || '').toLowerCase();
     const primaryType = (item.primaryType || '').toLowerCase();
     const types = (item.types || []).join(' ').toLowerCase();
 
@@ -78,17 +81,20 @@ export async function fetchNearbyPlaces(lat, lng) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Google API Raw Response Error:', data);
+      console.error('Google API Error:', data);
       throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
-    // 自動將 displayName.text 轉為 place.name，供轉盤元件直接讀取
+    // 將可讀餐廳名稱寫入 place.name
     return (data.places || [])
       .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
-      .map(place => ({
-        ...place,
-        name: place.displayName?.text || '未命名餐廳'
-      }));
+      .map(place => {
+        const realName = place.displayName?.text || '未命名餐廳';
+        return {
+          ...place,
+          name: realName
+        };
+      });
   } catch (err) {
     console.error('fetchNearbyPlaces failed:', err);
     throw err;
@@ -118,16 +124,20 @@ export async function fetchPlacesByAddress(address) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Google Text Search Raw Response Error:', data);
+      console.error('Text Search API Error:', data);
       throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
+    // 將可讀餐廳名稱寫入 place.name
     return (data.places || [])
       .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
-      .map(place => ({
-        ...place,
-        name: place.displayName?.text || '未命名餐廳'
-      }));
+      .map(place => {
+        const realName = place.displayName?.text || '未命名餐廳';
+        return {
+          ...place,
+          name: realName
+        };
+      });
   } catch (err) {
     console.error('fetchPlacesByAddress failed:', err);
     throw err;
