@@ -1,19 +1,23 @@
 import { GOOGLE_API_KEY } from '../config.js';
 
-// 1. 解析餐廳名稱 (最高優先級讀取 displayName.text)
+// 1. 解析餐廳名稱 (支援所有可能出現的屬性層級)
 export function parseRestaurantName(place, currentLang = 'zh') {
   if (!place) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
   if (typeof place === 'string') return place;
 
-  // 1.1 優先讀取新版 API 的 displayName.text
+  // 1.1 優先讀取 displayName.text
   if (place.displayName?.text) {
     return place.displayName.text;
   }
 
-  // 1.2 次選：如果 place.name 存在且不是內部路徑 (places/...)
+  // 1.2 次選：name 屬性 (排除 places/xxx 格式)
   if (place.name && typeof place.name === 'string' && !place.name.startsWith('places/')) {
     return place.name;
   }
+
+  // 1.3 其它常規備用欄位
+  if (place.title) return place.title;
+  if (place.label) return place.label;
 
   return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
 }
@@ -66,6 +70,7 @@ export async function fetchNearbyPlaces(lat, lng) {
 
   const requestBody = {
     textQuery: '餐廳',
+    languageCode: 'zh-HK',
     maxResultCount: 20,
     locationBias: {
       circle: {
@@ -93,17 +98,21 @@ export async function fetchNearbyPlaces(lat, lng) {
       throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
-    // 自動強制轉化為純文字 name 供轉盤渲染
-    return (data.places || [])
+    const processedPlaces = (data.places || [])
       .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
       .map(place => {
         const realName = parseRestaurantName(place);
         return {
           ...place,
           name: realName,
+          title: realName,
+          label: realName,
           displayName: { text: realName }
         };
       });
+
+    console.log('✅ 成功取得餐廳列表：', processedPlaces);
+    return processedPlaces;
   } catch (err) {
     console.error('fetchNearbyPlaces failed:', err);
     throw err;
@@ -116,6 +125,7 @@ export async function fetchPlacesByAddress(address) {
 
   const requestBody = {
     textQuery: `${address} 香港 餐廳`,
+    languageCode: 'zh-HK',
     maxResultCount: 20
   };
 
@@ -137,16 +147,21 @@ export async function fetchPlacesByAddress(address) {
       throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
-    return (data.places || [])
+    const processedPlaces = (data.places || [])
       .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
       .map(place => {
         const realName = parseRestaurantName(place);
         return {
           ...place,
           name: realName,
+          title: realName,
+          label: realName,
           displayName: { text: realName }
         };
       });
+
+    console.log('✅ 成功取得地址搜尋列表：', processedPlaces);
+    return processedPlaces;
   } catch (err) {
     console.error('fetchPlacesByAddress failed:', err);
     throw err;
