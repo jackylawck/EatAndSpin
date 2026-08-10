@@ -1,13 +1,21 @@
 import { GOOGLE_API_KEY } from '../config.js';
 
-// 1. 解析餐廳名稱 (相容各種資料結構)
+// 1. 解析餐廳名稱 (最高優先級讀取 displayName.text)
 export function parseRestaurantName(place, currentLang = 'zh') {
   if (!place) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
   if (typeof place === 'string') return place;
+
+  // 1.1 優先讀取新版 API 的 displayName.text
+  if (place.displayName?.text) {
+    return place.displayName.text;
+  }
+
+  // 1.2 次選：如果 place.name 存在且不是內部路徑 (places/...)
   if (place.name && typeof place.name === 'string' && !place.name.startsWith('places/')) {
     return place.name;
   }
-  return place.displayName?.text || (currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳');
+
+  return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
 }
 
 // 2. 根據 Chips 晶片按鈕進行篩選
@@ -18,7 +26,7 @@ export function filterPlaces(elements) {
   const selectedCuisines = Array.from(document.querySelectorAll('.cuisine-filter:checked')).map(el => el.value);
 
   return elements.filter(item => {
-    const name = (item.name || item.displayName?.text || '').toLowerCase();
+    const name = parseRestaurantName(item).toLowerCase();
     const primaryType = (item.primaryType || '').toLowerCase();
     const types = (item.types || []).join(' ').toLowerCase();
 
@@ -85,14 +93,15 @@ export async function fetchNearbyPlaces(lat, lng) {
       throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
-    // 將可讀餐廳名稱寫入 place.name
+    // 自動強制轉化為純文字 name 供轉盤渲染
     return (data.places || [])
       .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
       .map(place => {
-        const realName = place.displayName?.text || '未命名餐廳';
+        const realName = parseRestaurantName(place);
         return {
           ...place,
-          name: realName
+          name: realName,
+          displayName: { text: realName }
         };
       });
   } catch (err) {
@@ -128,14 +137,14 @@ export async function fetchPlacesByAddress(address) {
       throw new Error(`Google API Error: ${data.error?.message || response.statusText}`);
     }
 
-    // 將可讀餐廳名稱寫入 place.name
     return (data.places || [])
       .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
       .map(place => {
-        const realName = place.displayName?.text || '未命名餐廳';
+        const realName = parseRestaurantName(place);
         return {
           ...place,
-          name: realName
+          name: realName,
+          displayName: { text: realName }
         };
       });
   } catch (err) {
