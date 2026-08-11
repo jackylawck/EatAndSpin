@@ -3,9 +3,6 @@
 An open-source, privacy-first decision-making web app for finding local dining options in Hong Kong using weighted random algorithms.
 
 一款注重隱私、全本地端運算、專為香港在地用餐決策設計的加權抽籤轉盤網頁應用。
-
-![Eat & Spin Preview](Eatandspinicon-512.png)
-
 ---
 
 ## ✨ Features 特點
