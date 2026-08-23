@@ -1,221 +1,314 @@
-:root {
-  --primary: #ff4757;
-  --primary-hover: #ff6b81;
-  --bg-color: #0f172a;
-  --card-bg: #1e293b;
-  --text-color: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent-yellow: #eccc68;
-  --accent-blue: #70a1ff;
-  --radius: 20px;
-}
-
-* {
+/* ==========================================
+   1. CSS Reset & 基礎變數系統
+   ========================================== */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+:root {
+  /* 色彩系統 (符合 WCAG AA+ 對比度) */
+  --primary: #ff4757;
+  --primary-hover: #ff6b81;
+  --primary-text: #ffffff;
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --text-main: #f8fafc;
+  --text-secondary: #cbd5e1;  /* 提高亮度，對比度提升至 8:1 */
+  --accent-yellow: #fbbf24;
+  --accent-blue: #60a5fa;
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+  
+  /* 間距與圓角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  
+  /* 字體 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* 2. 全域樣式 */
 body {
+  font-family: var(--font-sans);
   background-color: var(--bg-color);
-  color: var(--text-color);
+  color: var(--text-main);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: var(--spacing-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* 3. 主容器 (響應式) */
 .container {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   background: var(--card-bg);
-  padding: 24px 20px;
-  border-radius: var(--radius);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-lg) var(--spacing-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: padding 0.2s ease;
 }
 
+/* 4. 標頭與語言切換 */
 .header {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .header h1 {
   font-size: 1.25rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #ff4757, #ffa502);
+  background: linear-gradient(135deg, var(--primary), #ffa502);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .lang-switch {
   display: flex;
-  gap: 6px;
+  gap: var(--spacing-xs);
 }
 
 .lang-switch button {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 20px;
   cursor: pointer;
   font-size: 0.75rem;
-  transition: 0.2s;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
+.lang-switch button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-main);
+}
+.lang-switch button:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+.lang-switch button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* 5. 模式切換標籤 */
 .mode-tabs {
   display: flex;
   width: 100%;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .tab-btn {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  padding: 8px 4px;
-  border-radius: 10px;
+  padding: var(--spacing-sm) var(--spacing-xs);
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+.tab-btn:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
 .tab-btn.active {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
-  box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.35);
 }
 
+/* 6. 隱私與通知欄 */
 .privacy-bar {
   width: 100%;
   background: rgba(255, 255, 255, 0.04);
   border-left: 3px solid var(--accent-blue);
   color: var(--text-secondary);
-  padding: 6px 10px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.72rem;
-  border-radius: 4px;
-  margin-bottom: 12px;
-  line-height: 1.3;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.4;
 }
 
 .notice-bar {
   width: 100%;
-  background: rgba(112, 161, 255, 0.1);
+  background: rgba(96, 165, 250, 0.08);
   border: 1px solid var(--accent-blue);
   color: var(--accent-blue);
-  padding: 10px;
-  border-radius: 10px;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-md);
 }
 
+/* 7. 輪盤容器 (響應式尺寸) */
 .wheel-container {
   position: relative;
-  width: 300px;
-  height: 300px;
-  margin-bottom: 20px;
+  width: min(300px, 80vw, 100%);
+  aspect-ratio: 1 / 1;
+  margin-bottom: var(--spacing-md);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 #wheelCanvas {
-  width: 300px;
-  height: 300px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
+  display: block;
+  background: transparent;
 }
 
+/* 指針 */
 .wheel-container::before {
   content: '';
   position: absolute;
-  top: -10px;
+  top: -6px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 20px solid var(--primary);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 18px solid var(--primary);
   z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
+/* 8. 主要按鈕 */
 .spin-btn {
   width: 100%;
-  background: linear-gradient(135deg, #ff4757, #ff6b81);
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #fff;
   border: none;
   padding: 14px;
   font-size: 1.1rem;
   font-weight: 700;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  box-shadow: 0 8px 15px rgba(255, 71, 87, 0.3);
-  transition: transform 0.1s;
+  box-shadow: 0 6px 15px rgba(255, 71, 87, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
 }
 
+.spin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 71, 87, 0.45);
+}
 .spin-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
-
+.spin-btn:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 3px;
+}
 .spin-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
+/* 9. 投票區塊 */
 .vote-section {
   width: 100%;
-  margin-top: 20px;
+  margin-top: var(--spacing-md);
   text-align: left;
 }
 
 .vote-section h3 {
   font-size: 0.85rem;
   color: var(--text-secondary);
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .input-group {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 .input-group input {
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-subtle);
   color: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
   font-size: 0.85rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+}
+.input-group input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
 }
 
 .action-btn, .geo-btn {
   background: var(--accent-blue);
   color: #fff;
   border: none;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 600;
+  transition: background 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+.action-btn:hover, .geo-btn:hover {
+  background: #3b82f6;
+}
+.action-btn:active, .geo-btn:active {
+  transform: scale(0.97);
+}
+.action-btn:focus-visible, .geo-btn:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
 }
 
+/* 10. 選項清單 (改善可讀性與觸控區域) */
 .item-list {
   list-style: none;
+  width: 100%;
 }
 
 .item-row {
@@ -223,62 +316,155 @@ body {
   justify-content: space-between;
   align-items: center;
   background: rgba(255, 255, 255, 0.03);
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-bottom: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-xs);
   font-size: 0.85rem;
+  gap: var(--spacing-sm);
 }
 
 .restaurant-name {
-  max-width: 180px;
+  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .vote-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
 }
 
 .vote-btn {
   background: rgba(255, 255, 255, 0.1);
   border: none;
   color: #fff;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   cursor: pointer;
   font-weight: bold;
+  transition: background 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vote-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.vote-btn:active {
+  transform: scale(0.92);
+}
+.vote-btn:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
 }
 
+/* 11. 結果顯示 */
 .result-box {
   width: 100%;
-  margin-top: 16px;
-  padding: 12px;
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   font-weight: 600;
   color: var(--accent-yellow);
   text-align: center;
-  min-height: 48px;
+  min-height: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--spacing-xs);
 }
 
 .nav-btn {
   display: inline-block;
-  margin-top: 8px;
-  padding: 6px 12px;
-  background: rgba(112, 161, 255, 0.15);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(96, 165, 250, 0.15);
   border: 1px solid var(--accent-blue);
   color: var(--accent-blue);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   text-decoration: none;
   font-size: 0.8rem;
   font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+.nav-btn:hover {
+  background: var(--accent-blue);
+  color: #fff;
+}
+.nav-btn:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* ==========================================
+   12. 響應式設計 (Mobile First)
+   ========================================== */
+@media (max-width: 420px) {
+  .container {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+  .header h1 {
+    font-size: 1.1rem;
+  }
+  .tab-btn {
+    font-size: 0.7rem;
+    padding: 6px 4px;
+  }
+  .wheel-container {
+    width: min(260px, 80vw);
+  }
+  .spin-btn {
+    font-size: 1rem;
+    padding: 12px;
+  }
+  .input-group input {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+  .action-btn, .geo-btn {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+  .item-row {
+    font-size: 0.8rem;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  .vote-btn {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* ==========================================
+   13. 打印樣式 (Print Friendly)
+   ========================================== */
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .container {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    background: #fff;
+  }
+  .lang-switch, .mode-tabs, .spin-btn, .input-group, .vote-controls, .nav-btn, .notice-bar, .privacy-bar {
+    display: none !important;
+  }
+  .result-box {
+    border: 1px solid #000;
+    background: #f9f9f9;
+    color: #000;
+  }
+  #wheelCanvas {
+    border: 1px solid #ccc;
+  }
 }
