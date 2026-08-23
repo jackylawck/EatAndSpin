@@ -119,6 +119,9 @@ export function setLanguage(lang) {
     // 忽略隱私模式下的儲存失敗
   }
 
+  // 同步 HTML 根標籤語言屬性
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-HK' : 'en';
+
   updateDOMTranslations();
 
   // 廣播自訂事件，讓 main.js 與其他模組主動響應
@@ -157,11 +160,23 @@ export function updateDOMTranslations() {
     });
   });
 
-  // 3. 語言按鈕高亮連動
-  document.getElementById('btnLangZh')?.classList.toggle('active', currentLang === 'zh');
-  document.getElementById('btnLangEn')?.classList.toggle('active', currentLang === 'en');
+  // 3. 語言按鈕狀態與 A11y
+  const btnZh = document.getElementById('btnLangZh');
+  const btnEn = document.getElementById('btnLangEn');
+  btnZh?.classList.toggle('active', currentLang === 'zh');
+  btnZh?.setAttribute('aria-pressed', currentLang === 'zh' ? 'true' : 'false');
+  btnEn?.classList.toggle('active', currentLang === 'en');
+  btnEn?.setAttribute('aria-pressed', currentLang === 'en' ? 'true' : 'false');
 }
 
 export function initI18n() {
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-HK' : 'en';
   updateDOMTranslations();
+}
+
+// 模組載入時自動初始化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initI18n);
+} else {
+  initI18n();
 }
