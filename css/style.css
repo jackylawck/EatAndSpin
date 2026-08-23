@@ -49,6 +49,19 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* 螢幕閱讀器專用隱藏類別 (A11y Screen Reader Only) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* 3. 主容器 (響應式) */
 .container {
   width: 100%;
@@ -305,7 +318,7 @@ body {
   outline-offset: 2px;
 }
 
-/* 10. 選項清單 (改善可讀性與觸控區域) */
+/* 10. 選項清單 */
 .item-list {
   list-style: none;
   width: 100%;
@@ -363,7 +376,7 @@ body {
   outline-offset: 2px;
 }
 
-/* 11. 結果顯示 */
+/* 11. 結果顯示 (具備彈出動畫) */
 .result-box {
   width: 100%;
   margin-top: var(--spacing-md);
@@ -380,6 +393,18 @@ body {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
+  animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .nav-btn {
