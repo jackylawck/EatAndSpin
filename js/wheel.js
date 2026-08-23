@@ -143,6 +143,10 @@ export function spinWheel(items = [], lang = 'zh') {
 
   isSpinning = true;
 
+  // 旋轉開始時先隱藏舊結果
+  const resultBox = document.getElementById('resultBox');
+  if (resultBox) resultBox.style.display = 'none';
+
   const randomAdditionalDeg = Math.floor(Math.random() * 360) + 1800;
   const startAngleDeg = (currentAngle * 180) / Math.PI;
   const duration = 3800;
