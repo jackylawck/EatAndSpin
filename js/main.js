@@ -1,5 +1,5 @@
 import { fetchNearbyPlaces, fetchPlacesByAddress, filterPlaces, parseRestaurantName } from './api/nearby.js';
-import { drawWheel, spinWheel } from './wheel.js';
+import { drawWheel, spinWheel, initWheelResizeObserver } from './wheel.js';
 
 // ==========================================
 // 1. 雙語字典 (i18n Dictionary)
@@ -12,6 +12,7 @@ const TRANSLATIONS = {
     privacyBar: '🔒 <strong>隱私聲明：</strong> 本地運算，絕不上傳或儲存個人位置。',
     locationPlaceholder: '輸入地點 (例: 觀塘 / 中環 / 灣仔)',
     btnSearchLoc: '搜尋地點',
+    filterTitle: '🎯 預先篩選類別：',
     btnGeo: '📡 使用目前 GPS 位置 (12間)',
     spinBtn: '食一轉！',
     sectionTitle: '🗳️ 餐廳選單與加權投票 (預設各 1 票)',
@@ -42,6 +43,7 @@ const TRANSLATIONS = {
     privacyBar: '🔒 <strong>Privacy Notice:</strong> Calculated locally. Location is never saved.',
     locationPlaceholder: 'Enter location (e.g., Central / Wan Chai)',
     btnSearchLoc: 'Search',
+    filterTitle: '🎯 Filter Categories:',
     btnGeo: '📡 Use Current GPS (12)',
     spinBtn: 'Spin Now!',
     sectionTitle: '🗳️ Menu & Weighted Voting (Default 1 vote)',
@@ -195,51 +197,66 @@ class UIRenderer {
     const customInput = document.getElementById('customInput');
     if (customInput) customInput.placeholder = t.customPlaceholder;
 
-    // 語言按鈕狀態
-    document.getElementById('btnLangZh')?.classList.toggle('active', state.lang === 'zh');
-    document.getElementById('btnLangEn')?.classList.toggle('active', state.lang === 'en');
+    // 語言按鈕狀態與 A11y
+    const btnZh = document.getElementById('btnLangZh');
+    const btnEn = document.getElementById('btnLangEn');
+    btnZh?.classList.toggle('active', state.lang === 'zh');
+    btnZh?.setAttribute('aria-pressed', state.lang === 'zh' ? 'true' : 'false');
+    btnEn?.classList.toggle('active', state.lang === 'en');
+    btnEn?.setAttribute('aria-pressed', state.lang === 'en' ? 'true' : 'false');
   }
 
   static render() {
     // 1. 切換 Tabs 與搜尋框顯示
     const isRestaurantMode = state.mode === 'restaurant';
-    document.getElementById('tabRestaurant')?.classList.toggle('active', isRestaurantMode);
-    document.getElementById('tabSetMenu')?.classList.toggle('active', !isRestaurantMode);
+    const tabRest = document.getElementById('tabRestaurant');
+    const tabMenu = document.getElementById('tabSetMenu');
+
+    tabRest?.classList.toggle('active', isRestaurantMode);
+    tabRest?.setAttribute('aria-selected', isRestaurantMode ? 'true' : 'false');
+    tabMenu?.classList.toggle('active', !isRestaurantMode);
+    tabMenu?.setAttribute('aria-selected', !isRestaurantMode ? 'true' : 'false');
 
     const locBox = document.getElementById('locationSearchBox');
     if (locBox) locBox.style.display = isRestaurantMode ? 'block' : 'none';
 
-    // 2. 渲染清單 (純 DOM 建立，防禦 XSS)
+    // 2. 渲染清單 (對齊 CSS 類別，XSS 安全)
     const listContainer = document.getElementById('itemList');
     if (listContainer) {
-      listContainer.replaceChildren(); // 清空舊節點
+      listContainer.replaceChildren();
 
       state.currentItems.forEach((item, index) => {
         const li = document.createElement('li');
-        li.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 8px; margin-bottom: 6px; background: rgba(255,255,255,0.05); border-radius: 8px;";
+        li.className = 'item-row';
 
         const titleSpan = document.createElement('span');
+        titleSpan.className = 'restaurant-name';
         titleSpan.textContent = `${item.name} (${item.votes}${TRANSLATIONS[state.lang].voteUnit})`;
 
         const actionDiv = document.createElement('div');
+        actionDiv.className = 'vote-controls';
 
         const btnPlus = document.createElement('button');
+        btnPlus.className = 'vote-btn';
         btnPlus.textContent = '+';
         btnPlus.dataset.action = 'vote-plus';
         btnPlus.dataset.index = index;
-        btnPlus.style.cssText = "padding: 2px 8px; margin-right: 4px;";
+        btnPlus.setAttribute('aria-label', `增加 ${item.name} 票數`);
 
         const btnMinus = document.createElement('button');
+        btnMinus.className = 'vote-btn';
         btnMinus.textContent = '-';
         btnMinus.dataset.action = 'vote-minus';
         btnMinus.dataset.index = index;
-        btnMinus.style.cssText = "padding: 2px 8px; margin-right: 8px;";
+        btnMinus.setAttribute('aria-label', `減少 ${item.name} 票數`);
 
         const btnDelete = document.createElement('button');
+        btnDelete.className = 'vote-btn';
         btnDelete.textContent = '❌';
         btnDelete.dataset.action = 'delete';
         btnDelete.dataset.index = index;
-        btnDelete.style.cssText = "background: none; border: none; cursor: pointer; color: #ff4757;";
+        btnDelete.style.color = '#ff4757';
+        btnDelete.setAttribute('aria-label', `刪除 ${item.name}`);
 
         actionDiv.append(btnPlus, btnMinus, btnDelete);
         li.append(titleSpan, actionDiv);
@@ -407,7 +424,7 @@ function handleCustomItemAdd() {
 }
 
 // ==========================================
-// 6. 現代化 Toast 提示模組 (取代原生 alert)
+// 6. 現代化 Toast 提示模組
 // ==========================================
 function showToast(message, type = 'info') {
   let container = document.getElementById('toast-container');
@@ -426,13 +443,11 @@ function showToast(message, type = 'info') {
 
   container.appendChild(toast);
 
-  // 動畫淡入
   requestAnimationFrame(() => {
     toast.style.opacity = '1';
     toast.style.transform = 'translateY(0)';
   });
 
-  // 3 秒後淡出並移除
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateY(-10px)';
@@ -441,14 +456,16 @@ function showToast(message, type = 'info') {
 }
 
 // ==========================================
-// 7. 啟動入口
+// 7. 啟動入口與自適應監聽
 // ==========================================
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    setupEventListeners();
-    UIRenderer.init();
-  });
-} else {
+function initApp() {
   setupEventListeners();
   UIRenderer.init();
+  initWheelResizeObserver(() => state.currentItems);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
 }
