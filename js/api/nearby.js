@@ -1,28 +1,48 @@
 import { GOOGLE_API_KEY } from '../config.js';
 
-// 1. 解析餐廳名稱 (支援所有可能出現的屬性層級)
+// ==========================================
+// 0. 輕量記憶化快取 (5 分鐘 TTL)
+// ==========================================
+const apiCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
+
+function getFromCache(key) {
+  const cached = apiCache.get(key);
+  if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    return cached.data;
+  }
+  apiCache.delete(key);
+  return null;
+}
+
+function setToCache(key, data) {
+  apiCache.set(key, { data, timestamp: Date.now() });
+}
+
+// ==========================================
+// 1. 解析餐廳名稱 (支援多層級屬性)
+// ==========================================
 export function parseRestaurantName(place, currentLang = 'zh') {
   if (!place) return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
   if (typeof place === 'string') return place;
 
-  // 1.1 優先讀取 displayName.text
   if (place.displayName?.text) {
     return place.displayName.text;
   }
 
-  // 1.2 次選：name 屬性 (排除 places/xxx 格式)
   if (place.name && typeof place.name === 'string' && !place.name.startsWith('places/')) {
     return place.name;
   }
 
-  // 1.3 其它常規備用欄位
   if (place.title) return place.title;
   if (place.label) return place.label;
 
   return currentLang === 'en' ? 'Unnamed Restaurant' : '未命名餐廳';
 }
 
+// ==========================================
 // 2. 根據 Chips 晶片按鈕進行篩選
+// ==========================================
 export function filterPlaces(elements) {
   if (!Array.isArray(elements)) return [];
 
@@ -57,10 +77,10 @@ export function filterPlaces(elements) {
   });
 }
 
+// ==========================================
 // 3. 按 GPS 坐標搜尋周邊餐廳
-export async function fetchNearbyPlaces(lat, lng) {
-  const url = 'https://places.googleapis.com/v1/places:searchText';
-
+// ==========================================
+export async function fetchNearbyPlaces(lat, lng, lang = 'zh-HK') {
   const latitude = parseFloat(lat);
   const longitude = parseFloat(lng);
 
@@ -68,9 +88,16 @@ export async function fetchNearbyPlaces(lat, lng) {
     throw new Error('Invalid GPS Coordinates');
   }
 
+  const cacheKey = `geo_${latitude.toFixed(3)}_${longitude.toFixed(3)}_${lang}`;
+  const cachedData = getFromCache(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
+  const url = 'https://places.googleapis.com/v1/places:searchText';
   const requestBody = {
     textQuery: '餐廳',
-    languageCode: 'zh-HK',
+    languageCode: lang === 'en' ? 'en' : 'zh-HK',
     maxResultCount: 20,
     locationBias: {
       circle: {
@@ -101,7 +128,7 @@ export async function fetchNearbyPlaces(lat, lng) {
     const processedPlaces = (data.places || [])
       .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
       .map(place => {
-        const realName = parseRestaurantName(place);
+        const realName = parseRestaurantName(place, lang);
         return {
           ...place,
           name: realName,
@@ -111,7 +138,7 @@ export async function fetchNearbyPlaces(lat, lng) {
         };
       });
 
-    console.log('✅ 成功取得餐廳列表：', processedPlaces);
+    setToCache(cacheKey, processedPlaces);
     return processedPlaces;
   } catch (err) {
     console.error('fetchNearbyPlaces failed:', err);
@@ -119,13 +146,21 @@ export async function fetchNearbyPlaces(lat, lng) {
   }
 }
 
+// ==========================================
 // 4. 按地區/地址搜尋餐廳
-export async function fetchPlacesByAddress(address) {
-  const url = 'https://places.googleapis.com/v1/places:searchText';
+// ==========================================
+export async function fetchPlacesByAddress(address, lang = 'zh-HK') {
+  const cleanAddress = address.trim();
+  const cacheKey = `addr_${cleanAddress.toLowerCase()}_${lang}`;
+  const cachedData = getFromCache(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
 
+  const url = 'https://places.googleapis.com/v1/places:searchText';
   const requestBody = {
-    textQuery: `${address} 香港 餐廳`,
-    languageCode: 'zh-HK',
+    textQuery: `${cleanAddress} 香港 餐廳`,
+    languageCode: lang === 'en' ? 'en' : 'zh-HK',
     maxResultCount: 20
   };
 
@@ -150,7 +185,7 @@ export async function fetchPlacesByAddress(address) {
     const processedPlaces = (data.places || [])
       .filter(place => !place.businessStatus || place.businessStatus === 'OPERATIONAL')
       .map(place => {
-        const realName = parseRestaurantName(place);
+        const realName = parseRestaurantName(place, lang);
         return {
           ...place,
           name: realName,
@@ -160,7 +195,7 @@ export async function fetchPlacesByAddress(address) {
         };
       });
 
-    console.log('✅ 成功取得地址搜尋列表：', processedPlaces);
+    setToCache(cacheKey, processedPlaces);
     return processedPlaces;
   } catch (err) {
     console.error('fetchPlacesByAddress failed:', err);
